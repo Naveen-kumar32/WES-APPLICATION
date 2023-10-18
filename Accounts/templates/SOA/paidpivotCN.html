@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Summary</title>
+    <style>
+         table {
+            border: 1px solid #000000;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            width: 80%;
+            margin: 0 auto; 
+            font-size: 16px; 
+        }
+
+        th {
+            background-color: #80c8f1;
+            font-size: 18px; 
+            padding: 10px; 
+        }
+
+        td {
+            text-align: center; 
+            padding: 8px; 
+        }
+
+        h1 {
+            font-size: 24px; 
+            text-align: center; 
+            margin-top: 20px; 
+        }
+        .wyryry{color:red}
+
+    </style>
+</head>
+
+<body>
+    <div style="display: flex;justify-content: center;align-items: center;margin-top: 40px;background-color: #dfdfe2;margin-bottom: 20px;">
+        <h1>PAID (Client Name)</h1>
+      </div>
+      <div   style="padding: 50px;background-color:  #cacaca;">
+    <table border="1" >
+        <tr>
+            <th>Client Name</th>
+            
+            <th>INR (Paid)</th>
+            <th>SGD ( Paid)</th>
+            <th>USD ( Paid)</th>
+            <th>Total  Paid</th>
+           
+        </tr>
+        {% for item in pivot_table %}
+        <tr>
+            <td>{{ item.ClientName|upper }}</td>
+            
+            <td>{{ item.INR|default_if_none:''|floatformat:"2" }}</td>
+            <td>{{ item.SGD|default_if_none:''|floatformat:"2" }}</td>
+            <td>{{ item.USD|default_if_none:''|floatformat:"2" }}</td>
+            <td>{{ item.TotalNotPaid|default_if_none:''}}</td>
+            
+            
+        </tr>
+        {% endfor %}
+        <tr>
+            <td><strong>Totals</strong></td>
+            
+            <td><strong>{{ inr_total|floatformat:"2" }}</strong></td>
+            <td><strong>{{ sgd_total|floatformat:"2" }}</strong></td>
+            <td><strong>{{ usd_total|floatformat:"2" }}</strong></td>
+            <td> <strong>{{ total_not_paid }}</strong> </td>
+           
+        </tr>
+    </table>
+</div>
+    <br>
+    <br>
+    
+</body>
+
+</html>

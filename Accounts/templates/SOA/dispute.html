@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Dispute Data</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.7.2/dist/css/bootstrap.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.js"></script>
+
+
+  {% load static %}
+
+
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      word-break: break-all;
+      white-space: nowrap;
+
+    }
+
+    table th,
+    table td {
+      padding: 2px;
+      border: 1px solid #ddd;
+      font-size: 11px;
+    }
+
+    table th:first-child,
+    table td:first-child {
+      width: 50px; /* Reduce the width of the "id" column to 50px */
+    }
+
+    table th {
+      font-weight: bold;
+      background-color: #0fa6d4;
+    }
+
+    td {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+    }
+
+    tr {
+      width: 200px;
+      height: auto;
+      width: max-content;
+    }
+
+    td.expandable {
+      overflow: auto;
+      white-space: normal;
+      max-height: 200px;
+      width: 100px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .delete-button {
+      height: 100%;
+      /* line-height: 20px;  */
+      width: 100%;
+
+    }
+
+    .update-link {
+      height: 100%;
+      /* line-height: 20px;  */
+      width: 100%;
+    }
+
+
+    @media print {
+      body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 20mm;
+        overflow-wrap: break-word;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table th,
+      table td {
+        padding: 4px;
+        border: 1px solid black;
+        font-size: 4px;
+        page-break-inside: avoid;
+        font-size: 11px;
+      }
+
+      thead {
+        font-weight: bold;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+        height: 300px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin-top: 0px;
+        page-break-inside: avoid;
+      }
+
+      .footer {
+        position: fixed;
+        bottom: 0;
+        text-align: center;
+        justify-content: center;
+        font-size: 12px;
+        width: 100%;
+        height: 200px;
+
+      }
+
+      .page-number:after {
+        content: counter(page);
+        
+      }
+
+      .page-break {
+        page-break-after: always;
+
+      }
+    }
+        .fixed-image {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    /* You can adjust the width and height as needed */
+    width: 100px;
+    height: auto;
+    /* Optionally, add some spacing around the image */
+    margin: 10px;
+}
+  </style>
+</head>
+
+<body>
+  <div style="margin:2%">
+  
+  <div>
+    <!-- Display the total number of rows -->
+    Total Rows: <span id="total-rows">{{ total_rows }}</span>
+  </div>
+
+
+
+
+
+  <!-- Display the filtered data -->
+  <table class="table" id="dispute_data">
+    <thead>
+      <tr>
+        <th>id</th>
+        <th>PONo</th>
+        <th>POIssuedby</th>
+        <th>Duedate</th>
+        <th>InvoiceNo</th>
+        <th>Invoiceamount</th>
+        <th>paymentstatus</th>
+        <th>Invcurrency</th>
+        <th>outstandingBalance</th>
+        <th>Dispute Reason</th>
+        <!-- <th>new status</th> -->
+      </tr>
+    </thead>
+    <tbody>
+      {% for data in test1 %}
+      <tr data-id="{{ data.id }}">
+        <td class="expandable">{{ data.id }}</td>
+        <td class="expandable">{{ data.PONo }}</td>
+        <td class="expandable">{{ data.POIssuedby }}</td>
+        <td class="expandable">{{ data.Duedate }}</td>
+        <td class="expandable">{{ data.InvoiceNo }}</td>
+        <td class="expandable invoice-amount">{{ data.Invoiceamount }}</td>
+        <td class="expandable">{{ data.paymentstatus }}</td>
+        <td class="expandable">{{ data.Invcurrency }}</td>
+        <td class="expandable out-standing">{{ data.outstandingBalance }}</td>
+        <td class="expandable">{{ data.DisputeReason }}</td>
+        <!-- <td class="expandable">{{ data.newstatus }}</td> -->
+        <td class="update-cell expandable">
+          <a class="update-link btn btn-sm btn-primary" href="{% url 'Accounts:update' data.id %}"> Full Update</a>
+        </td>
+        
+      </tr>
+      {% endfor %}
+      <tr>
+        <td colspan="5" style="border-right: none;">Total Invoice Amount: </td>
+        <!-- <td colspan="3"></td> -->
+
+        <td  id="total-invoice-amount" style="border-left: none;"></td>
+        <td colspan="1" style="border-bottom: none;"></td>
+        <td style="border-right: none;">Total outstanding Amount: </td>
+        <td style="border-left: none;" id="total-outstanding-amount"></td>
+      </tr>
+    </tbody>
+  </table>
+  
+
+  <div id="paginator"></div>
+  
+    <a  class="btn btn-primary"
+    href="{% url 'Accounts:download' %}?filter_ClientName={{ filter_ClientName }}&filter_newstatus={{ filter_newstatus }}&filter_currency1={{ filter_currency1 }}">Download pdf</a>
+
+
+
+  
+
+    <a  class="btn btn-primary"
+      href="{% url 'Accounts:disputecsv' %}">Download
+      as CSV</a>
+
+
+      
+  </div>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+            function loadFilteredData() {
+        $('#dispute_data').load(document.location.href + '#dispute_data');
+      }
+    });
+    $(document).ready(function () {
+      calculateTotalInvoiceAmount();
+      calculateTotalOutstandingamount();
+      var totalRows = parseInt($('#total-rows').text());
+
+      $(document).on('click', '.delete-button', function () {
+        const rowId = $(this).data('id');
+        if (confirm('Are you sure you want to delete this row?')) {
+          deleteRow(rowId);
+        }
+      });
+    });
+
+    function calculateTotalInvoiceAmount() {
+      let totalAmount = 0;
+      $('.invoice-amount').each(function () { 
+        const invoiceAmount = parseFloat($(this).text().replace(/[^0-9.-]+/g, ''));
+        if (!isNaN(invoiceAmount)) {
+          totalAmount += invoiceAmount;
+        }
+      });
+
+      $('#total-invoice-amount').text(totalAmount.toFixed(2));
+
+      
+    }
+
+    function calculateTotalOutstandingamount() {
+      let totalAmount1 = 0; 
+      $('.out-standing').each(function () {
+        const outstanding = parseFloat($(this).text().replace(/[^0-9.-]+/g, ''));
+        if (!isNaN(outstanding)) {
+          totalAmount1 += outstanding;
+        }
+      });
+
+      $('#total-outstanding-amount').text(totalAmount1.toFixed(2));
+
+    
+  }
+
+    function deleteRow(rowId) {
+      
+      $.ajax({
+        url: `/delete/${rowId}/`,
+        type: 'DELETE', 
+        beforeSend: function (xhr) {
+          xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        },
+        success: function (response) {
+          if (response.message === 'Row deleted successfully.') {
+            $(`tr[data-id="${rowId}"]`).remove();
+            calculateTotalInvoiceAmount(); 
+          } else {
+            alert('Error deleting row. Please try again.'); 
+          }
+        },
+        error: function () {
+          alert('Error deleting row. Please try again.'); 
+        }
+      });
+    }
+
+    
+
+  </script>
+
+</body>
+
+</html>

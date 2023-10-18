@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Summary</title>
+    <style>
+        table {
+            border: 1px solid #000000;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            width: 80%; /* Adjust the table width as needed */
+            margin: 0 auto; /* Center the table horizontally */
+            font-size: 16px; /* Increase font size for table */
+        }
+
+        th {
+            background-color: #80c8f1;
+            font-size: 18px; /* Increase font size for table header */
+            padding: 10px; /* Add padding to header cells */
+        }
+
+        td {
+            text-align: center; /* Center-align table data */
+            padding: 8px; /* Add padding to data cells */
+        }
+
+        h1 {
+            font-size: 24px; /* Increase font size for headings */
+            text-align: center; /* Center-align headings */
+            margin-top: 20px; /* Adjust the top margin as needed */
+        }
+
+    </style>
+</head>
+
+<body>
+   
+    <div style="display: flex;justify-content: center;align-items: center;margin-top: 40px;background-color: #dfdfe2;margin-bottom: 20px;">
+        <h1>Order processing</h1>
+      </div>
+      <div   style="padding: 50px;background-color:  #cacaca;">
+    <table border="1">
+        <tr>
+            <th>Client Name</th>
+           
+            <th>INR (Order Processing)</th>
+            <th>SGD (Order Processing)</th>
+            <th>USD (Order Processing)</th>
+            <th>Total Order Processing</th>
+        </tr>
+        {% for item in pivot_table_sorted1 %}
+        <tr>
+            <td>{{ item.ClientName|upper }}</td>
+            
+            <td>{{ item.INR|default_if_none:'' }}</td>
+            <td>{{ item.SGD|default_if_none:'' }}</td>
+            <td>{{ item.USD|default_if_none:'' }}</td>
+            <td>{{ item.TotalOrderProcessing1|default_if_none:'' }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td><strong>Totals</strong></td>
+           
+            <td><strong>{{ inr_total1 }}</strong></td>
+            <td><strong>{{ sgd_total1 }}</strong></td>
+            <td><strong>{{ usd_total1 }}</strong></td>
+            <td><strong>{{ total_order_processing }}</strong></td>
+           
+        </tr>
+    </table>
+</div>
+</body>
+
+</html>

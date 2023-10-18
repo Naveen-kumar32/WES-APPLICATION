@@ -1,0 +1,365 @@
+<html><head>
+    <meta charset="utf-8">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="fonts/linearicons/style.css">
+    
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="robots" content="noindex, follow">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.js"></script>
+    <script defer="" referrerpolicy="origin" src="/cdn-cgi/zaraz/s.js?z=JTdCJTIyZXhlY3V0ZWQlMjIlM0ElNUIlNUQlMkMlMjJ0JTIyJTNBJTIyUmVnaXN0cmF0aW9uRm9ybV92MTAlMjBieSUyMENvbG9ybGliJTIyJTJDJTIyeCUyMiUzQTAuNTU4ODE0NzAzMTE0OTQwNCUyQyUyMnclMjIlM0ExNjgwJTJDJTIyaCUyMiUzQTEwNTAlMkMlMjJqJTIyJTNBOTMzJTJDJTIyZSUyMiUzQTE2ODAlMkMlMjJsJTIyJTNBJTIyZmlsZSUzQSUyRiUyRiUyRkMlM0ElMkZVc2VycyUyRldlc19BZG1pbiUyRnNhbXBsZS5odG1sJTIyJTJDJTIyciUyMiUzQSUyMiUyMiUyQyUyMmslMjIlM0EyNCUyQyUyMm4lMjIlM0ElMjJVVEYtOCUyMiUyQyUyMm8lMjIlM0EtMzMwJTJDJTIycSUyMiUzQSU1QiU3QiUyMm0lMjIlM0ElMjJzZXQlMjIlMkMlMjJhJTIyJTNBJTVCJTIyMCUyMiUyQyUyMkElMjIlMkMlN0IlMjJzY29wZSUyMiUzQSUyMnBhZ2UlMjIlN0QlNUQlN0QlNUQlN0Q="></script><script type="text/javascript" async="" src="https://www.google-analytics.com/analytics.js" nonce="aeff077d-670f-4405-a64f-e1d790813227"></script><script type="text/javascript" async="" src="https://www.google-analytics.com/analytics.js" nonce="aeff077d-670f-4405-a64f-e1d790813227"></script><script defer="" referrerpolicy="origin" src="/cdn-cgi/zaraz/s.js?z=JTdCJTIyZXhlY3V0ZWQlMjIlM0ElNUIlNUQlMkMlMjJ0JTIyJTNBJTIyUmVnaXN0cmF0aW9uRm9ybV92MTAlMjBieSUyMENvbG9ybGliJTIyJTJDJTIyeCUyMiUzQTAuMDEzNzkyNzY0NTQ0MDA0NTc3JTJDJTIydyUyMiUzQTE2ODAlMkMlMjJoJTIyJTNBMTA1MCUyQyUyMmolMjIlM0E5MzMlMkMlMjJlJTIyJTNBMTY4MCUyQyUyMmwlMjIlM0ElMjJodHRwcyUzQSUyRiUyRmNvbG9ybGliLmNvbSUyRmV0YyUyRnJlZ2Zvcm0lMkZjb2xvcmxpYi1yZWdmb3JtLTI2JTJGJTIyJTJDJTIyciUyMiUzQSUyMmh0dHBzJTNBJTJGJTJGY29sb3JsaWIuY29tJTJGJTIyJTJDJTIyayUyMiUzQTI0JTJDJTIybiUyMiUzQSUyMlVURi04JTIyJTJDJTIybyUyMiUzQS0zMzAlMkMlMjJxJTIyJTNBJTVCJTdCJTIybSUyMiUzQSUyMnNldCUyMiUyQyUyMmElMjIlM0ElNUIlMjIwJTIyJTJDJTIyVSUyMiUyQyU3QiUyMnNjb3BlJTIyJTNBJTIycGFnZSUyMiU3RCU1RCU3RCUyQyU3QiUyMm0lMjIlM0ElMjJzZXQlMjIlMkMlMjJhJTIyJTNBJTVCJTIyMSUyMiUyQyUyMkElMjIlMkMlN0IlMjJzY29wZSUyMiUzQSUyMnBhZ2UlMjIlN0QlNUQlN0QlMkMlN0IlMjJtJTIyJTNBJTIyc2V0JTIyJTJDJTIyYSUyMiUzQSU1QiUyMjIlMjIlMkMlMjItJTIyJTJDJTdCJTIyc2NvcGUlMjIlM0ElMjJwYWdlJTIyJTdEJTVEJTdEJTJDJTdCJTIybSUyMiUzQSUyMnNldCUyMiUyQyUyMmElMjIlM0ElNUIlMjIzJTIyJTJDJTIyMiUyMiUyQyU3QiUyMnNjb3BlJTIyJTNBJTIycGFnZSUyMiU3RCU1RCU3RCUyQyU3QiUyMm0lMjIlM0ElMjJzZXQlMjIlMkMlMjJhJTIyJTNBJTVCJTIyNCUyMiUyQyUyMjMlMjIlMkMlN0IlMjJzY29wZSUyMiUzQSUyMnBhZ2UlMjIlN0QlNUQlN0QlMkMlN0IlMjJtJTIyJTNBJTIyc2V0JTIyJTJDJTIyYSUyMiUzQSU1QiUyMjUlMjIlMkMlMjI1JTIyJTJDJTdCJTIyc2NvcGUlMjIlM0ElMjJwYWdlJTIyJTdEJTVEJTdEJTJDJTdCJTIybSUyMiUzQSUyMnNldCUyMiUyQyUyMmElMjIlM0ElNUIlMjI2JTIyJTJDJTIyOCUyMiUyQyU3QiUyMnNjb3BlJTIyJTNBJTIycGFnZSUyMiU3RCU1RCU3RCUyQyU3QiUyMm0lMjIlM0ElMjJzZXQlMjIlMkMlMjJhJTIyJTNBJTVCJTIyNyUyMiUyQyUyMjElMjIlMkMlN0IlMjJzY29wZSUyMiUzQSUyMnBhZ2UlMjIlN0QlNUQlN0QlMkMlN0IlMjJtJTIyJTNBJTIyc2V0JTIyJTJDJTIyYSUyMiUzQSU1QiUyMjglMjIlMkMlMjI1JTIyJTJDJTdCJTIyc2NvcGUlMjIlM0ElMjJwYWdlJTIyJTdEJTVEJTdEJTJDJTdCJTIybSUyMiUzQSUyMnNldCUyMiUyQyUyMmElMjIlM0ElNUIlMjI5JTIyJTJDJTIyNiUyMiUyQyU3QiUyMnNjb3BlJTIyJTNBJTIycGFnZSUyMiU3RCU1RCU3RCUyQyU3QiUyMm0lMjIlM0ElMjJzZXQlMjIlMkMlMjJhJTIyJTNBJTVCJTIyMTAlMjIlMkMlMjI4JTIyJTJDJTdCJTIyc2NvcGUlMjIlM0ElMjJwYWdlJTIyJTdEJTVEJTdEJTJDJTdCJTIybSUyMiUzQSUyMnNldCUyMiUyQyUyMmElMjIlM0ElNUIlMjIxMSUyMiUyQyUyMi0lMjIlMkMlN0IlMjJzY29wZSUyMiUzQSUyMnBhZ2UlMjIlN0QlNUQlN0QlMkMlN0IlMjJtJTIyJTNBJTIyc2V0JTIyJTJDJTIyYSUyMiUzQSU1QiUyMjEyJTIyJTJDJTIyMSUyMiUyQyU3QiUyMnNjb3BlJTIyJTNBJTIycGFnZSUyMiU3RCU1RCU3RCUyQyU3QiUyMm0lMjIlM0ElMjJzZXQlMjIlMkMlMjJhJTIyJTNBJTVCJTIyMTMlMjIlMkMlMjIzJTIyJTJDJTdCJTIyc2NvcGUlMjIlM0ElMjJwYWdlJTIyJTdEJTVEJTdEJTVEJTdE"></script><script nonce="aeff077d-670f-4405-a64f-e1d790813227">(function(w,d){!function(db,dc,dd,de){db[dd]=db[dd]||{};db[dd].executed=[];db.zaraz={deferred:[],listeners:[]};db.zaraz.q=[];db.zaraz._f=function(df){return async function(){var dg=Array.prototype.slice.call(arguments);db.zaraz.q.push({m:df,a:dg})}};for(const dh of["track","set","debug"])db.zaraz[dh]=db.zaraz._f(dh);db.zaraz.init=()=>{var di=dc.getElementsByTagName(de)[0],dj=dc.createElement(de),dk=dc.getElementsByTagName("title")[0];dk&&(db[dd].t=dc.getElementsByTagName("title")[0].text);db[dd].x=Math.random();db[dd].w=db.screen.width;db[dd].h=db.screen.height;db[dd].j=db.innerHeight;db[dd].e=db.innerWidth;db[dd].l=db.location.href;db[dd].r=dc.referrer;db[dd].k=db.screen.colorDepth;db[dd].n=dc.characterSet;db[dd].o=(new Date).getTimezoneOffset();if(db.dataLayer)for(const dp of Object.entries(Object.entries(dataLayer).reduce(((dq,dr)=>({...dq[1],...dr[1]})),{})))zaraz.set(dp[0],dp[1],{scope:"page"});db[dd].q=[];for(;db.zaraz.q.length;){const ds=db.zaraz.q.shift();db[dd].q.push(ds)}dj.defer=!0;for(const dt of[localStorage,sessionStorage])Object.keys(dt||{}).filter((dv=>dv.startsWith("_zaraz_"))).forEach((du=>{try{db[dd]["z_"+du.slice(7)]=JSON.parse(dt.getItem(du))}catch{db[dd]["z_"+du.slice(7)]=dt.getItem(du)}}));dj.referrerPolicy="origin";dj.src="/cdn-cgi/zaraz/s.js?z="+btoa(encodeURIComponent(JSON.stringify(db[dd])));di.parentNode.insertBefore(dj,di)};["complete","interactive"].includes(dc.readyState)?zaraz.init():db.addEventListener("DOMContentLoaded",zaraz.init)}(w,d,"zarazData","script");})(window,document);</script><style>
+        @font-face {
+    font-family: muli-regular;
+    src: url(../fonts/muli/Muli-Regular.ttf)
+}
+
+@font-face {
+    font-family: muli-semibold;
+    src: url(../fonts/muli/Muli-SemiBold.ttf)
+}
+
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box
+}
+
+body {
+    font-family: muli-regular;
+    font-size: 14px;
+    margin: 0;
+    color: #999
+}
+
+input,textarea,select,button {
+    font-family: muli-regular
+}
+
+p,h1,h2,h3,h4,h5,h6,ul {
+    margin: 0
+}
+
+img {
+    max-width: 100%
+}
+
+ul {
+    padding-left: 0;
+    margin-bottom: 0
+}
+
+a {
+    text-decoration: none
+}
+
+:focus {
+    outline: none
+}
+
+.wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #accffe
+}
+
+.inner {
+    position: relative;
+    width: 435px;
+    margin: 25px;
+}
+
+.image-1 {
+    position: absolute;
+    bottom: -12px;
+    left: -191px;
+    z-index: 99
+}
+
+.image-2 {
+    position: absolute;
+    bottom: 0;
+    right: -190px
+}
+
+form {
+    width: 100%;
+    position: relative;
+    z-index: 9;
+    padding: 77px 61px 66px;
+    background: #fff;
+    box-shadow: 0 0 10px 0 rgba(0,0,0,.2);
+    -webkit-box-shadow: 0 0 10px 0 rgba(0,0,0,.2);
+    -moz-box-shadow: 0 0 10px 0 rgba(0,0,0,.2);
+    -ms-box-shadow: 0 0 10px 0 rgba(0,0,0,.2);
+    -o-box-shadow: 0 0 10px 0 rgba(0,0,0,.2)
+}
+
+h3 {
+    text-transform: uppercase;
+    font-size: 25px;
+    font-family: muli-semibold;
+    color: #333;
+    letter-spacing: 3px;
+    text-align: center;
+    margin-bottom: 33px
+}
+
+.form-holder {
+    position: relative;
+    margin-bottom: 21px
+}
+
+.form-holder span {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    color: #333
+}
+
+.form-holder span.lnr-lock {
+    left: 2px
+}
+
+.form-control {
+    border: none;
+    border-bottom: 1px solid #e6e6e6;
+    display: block;
+    width: 100%;
+    height: 38px;
+    background: 0 0;
+    padding: 3px 42px 0;
+    color: #250d69;
+    font-family: muli-semibold;
+    font-size: 16px
+}
+
+.form-control::-webkit-input-placeholder {
+    font-size: 14px;
+    font-family: muli-regular;
+    color: #999;
+    transform: translateY(1px)
+}
+
+.form-control::-moz-placeholder {
+    font-size: 14px;
+    font-family: muli-regular;
+    color: #999;
+    transform: translateY(1px)
+}
+
+.form-control:-ms-input-placeholder {
+    font-size: 14px;
+    font-family: muli-regular;
+    color: #999;
+    transform: translateY(1px)
+}
+
+.form-control:-moz-placeholder {
+    font-size: 14px;
+    font-family: muli-regular;
+    color: #999;
+    transform: translateY(1px)
+}
+
+.form-control:focus {
+    border-bottom: 1px solid #accffe
+}
+
+button {
+    border: none;
+    width: 100%;
+    height: 49px;
+    margin-top: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: #427ff0;
+    color: #fff;
+    text-transform: uppercase;
+    font-family: muli-semibold;
+    font-size: 15px;
+    letter-spacing: 2px;
+    transition: all .5s;
+    position: relative;
+    overflow: hidden
+}
+
+button span {
+    position: relative;
+    z-index: 2
+}
+
+button:before,button:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: #3498fd40;
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    -o-transition: all .3s;
+    transition: all .3s;
+    -webkit-transform: translate(-100%,0);
+    transform: translate(-100%,0);
+    -webkit-transition-timing-function: cubic-bezier(.75,0,.125,1);
+    transition-timing-function: cubic-bezier(.75,0,.125,1)
+}
+
+button:after {
+    -webkit-transition-delay: .2s;
+    transition-delay: .2s
+}
+
+button:hover:before,button:hover:after {
+    -webkit-transform: translate(0,0);
+    transform: translate(0,0)
+}
+
+@media(max-width: 991px) {
+    .inner {
+        width:400px;
+        left: 4%
+    }
+}
+
+@media(max-width: 767px) {
+    .inner {
+        width:100%;
+        left: 0
+    }
+
+    .image-1,.image-2 {
+        display: none
+    }
+
+    form {
+        padding: 35px;
+        box-shadow: none;
+        -webkit-box-shadow: none;
+        -moz-box-shadow: none;
+        -ms-box-shadow: none;
+        -o-box-shadow: none
+    }
+
+    .wrapper {
+        background: 0 0
+    }
+}
+a {
+    border: none;
+    width: 100%;
+    height: 49px;
+    margin-top: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: #427ff0;
+    color: #fff;
+    text-transform: uppercase;
+    font-family: muli-semibold;
+    font-size: 15px;
+    letter-spacing: 2px;
+    transition: all .5s;
+    position: relative;
+    overflow: hidden
+}
+
+a  {
+    position: relative;
+    z-index: 2
+}
+
+a:before,button:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: #3498fd40;
+    -webkit-transition: all .3s;
+    -moz-transition: all .3s;
+    -o-transition: all .3s;
+    transition: all .3s;
+    -webkit-transform: translate(-100%,0);
+    transform: translate(-100%,0);
+    -webkit-transition-timing-function: cubic-bezier(.75,0,.125,1);
+    transition-timing-function: cubic-bezier(.75,0,.125,1)
+}
+
+a:after {
+    -webkit-transition-delay: .2s;
+    transition-delay: .2s
+}
+
+a:hover:before,button:hover:after {
+    -webkit-transform: translate(0,0);
+    transform: translate(0,0)
+}
+        
+        </style></head>
+    
+    
+    <body>
+        <div class="wrapper">
+        <div class="inner">
+            <img src="{% static 'image/image1.png' %}" alt="" class="image-1">
+            <form method="post" action="{% url 'index:Accountslogin' %}">
+                {% csrf_token %}
+                <h3>Accounts</h3>
+                <div class="form-holder">
+                    <span class="lnr lnr-user"></span>
+                    <input type="text" class="form-control" name="username" placeholder="Username" required>
+                </div>
+                <div class="form-holder">
+                    <span class="lnr lnr-lock"></span>
+                    <input type="password" class="form-control" name="password" placeholder="Password" required>
+                </div>
+                <button type="submit">
+                    <span>Login</span>
+                </button>
+                
+            </form>
+            
+        </div>
+
+        
+    </div>
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-23581568-13"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'UA-23581568-13');
+      $(document).ready(function () {
+    if (window.history && window.history.pushState) {
+        $(window).on('popstate', function () {
+            // Clear form data (assuming 'myForm' is the form ID)
+            $('#myForm')[0].reset();
+        });
+    }
+});
+    </script>
+    <script defer="" src="https://static.cloudflareinsights.com/beacon.min.js/v8b253dfea2ab4077af8c6f58422dfbfd1689876627854" integrity="sha512-bjgnUKX4azu3dLTVtie9u6TKqgx29RBwfj3QXYt5EKfWM/9hPSAI/4qcV5NACjwAo8UtTeWefx6Zq5PHcMm7Tg==" data-cf-beacon="{&quot;rayId&quot;:&quot;8003af668b957a1e&quot;,&quot;token&quot;:&quot;cd0b4b3a733644fc843ef0b185f98241&quot;,&quot;version&quot;:&quot;2023.8.0&quot;,&quot;si&quot;:100}" crossorigin="anonymous"></script>
+    
+    </body></html>
+
+    

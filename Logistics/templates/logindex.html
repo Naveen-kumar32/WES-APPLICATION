@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Testdata List</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.7.2/dist/css/bootstrap.min.css">
+
+    <!-- Include Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.js"></script>
+
+    <style>
+        /* Additional styling for the datepicker */
+        .datepicker {
+            width: 200px;
+        }
+        select {
+        height: 40px;
+        font-size: 18px;
+    }
+
+    /* Increase the font size of the options */
+    select option {
+        font-size: 18px;
+    }
+        label
+        {
+
+
+            font-size: 25px;
+        }
+
+        table th {
+            font-weight: bold;
+            background-color: #f9f9f9;
+        }
+        h1{
+            font-size: 25px;
+        }
+        input{
+            font-size: 25px;
+
+        }
+        a{
+            border: 5px solid linear-gradient(45deg, #ff0000,#ff3300,#ffc400,#00ff55,#0066ff,#06156d,#6f00ff);
+            margin:20px
+        }
+        .custom-button {
+    background: linear-gradient(45deg, #d1018c,#6d0742);
+    /* background: linear-gradient(45deg, #ff0000,#ff3300,#ffc400,#00ff55,#0066ff,#06156d,#6f00ff);
+    border-color: linear-gradient(45deg, #ff0000,#ff3300,#ffc400,#00ff55,#0066ff,#06156d,#6f00ff);
+    border: 5px solid ;
+
+    /* opacity: 0.5; */
+    color: #fcf9f9;
+  }
+  .custom-button1 {
+    background: linear-gradient(45deg, #3484df,#0139d3);
+    /* border-color: #6d0742; */
+    /* opacity: 0.5; */
+    color: #fcf9f9;
+  }
+   /* Additional styling for the datepicker */
+   .datepicker {
+            width: 200px;
+        }
+        select {
+        height: 40px;
+        font-size: 18px;
+    }
+
+    /* Increase the font size of the options */
+    select option {
+        font-size: 18px;
+    }
+        label
+        {
+
+
+            font-size: 25px;
+        }
+
+        table th {
+            font-weight: bold;
+            background-color: #f9f9f9;
+        }
+        h1{
+            font-size: 25px;
+        }
+        input{
+            font-size: 25px;
+
+        }
+        .formstyle
+        {
+            padding-top:20px;
+            margin-top: 50px;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+
+
+<body>
+    <div style="padding: 20px;height: 100vh;width: auto;background-color: #d8d7d8;">
+
+
+    
+    <div style="display: flex;margin-top: 30px;">
+
+        <a class="btn custom-button" href="{% url 'Logistics:dhlindex' %}" target="_blank">DHL</a>
+
+        <a class="btn custom-button" href="{% url 'Logistics:wesiindex' %}" target="_blank">Number Series WES-I</a>
+
+        <a class="btn custom-button" href="{% url 'Logistics:wessindex' %}" target="_blank">Number Series WES-S</a>
+
+       
+    </div>
+   
+</div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+
+   
+
+
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Wes-S</title>
+    <style>
+        table {
+            border: 1px solid #000000;
+            border-collapse: collapse;
+            background-color: #ffffff;
+            width: 80%; 
+            margin: 0 auto; 
+            font-size: 16px; 
+        }
+
+        th {
+            background-color: #80c8f1;
+            font-size: 18px; 
+            padding: 10px; 
+        }
+
+        td {
+            text-align: center; 
+            padding: 8px; 
+        }
+
+        h1 {
+            font-size: 24px; 
+            text-align: center; 
+            margin-top: 20px; 
+        }
+
+    </style>
+</head>
+
+<body>
+    <div style="display: flex;justify-content: center;align-items: center;margin-top: 40px;background-color: #dfdfe2;margin-bottom: 20px;">
+        <h1>Branch</h1> 
+      </div>
+      <div style="display: flex;justify-content: center;align-items: center;margin-top: 40px;background-color: #dfdfe2;margin-bottom: 20px;">
+        <h1>(WES-S)</h1> 
+      </div>
+      <div style="padding: 50px; background-color: #cacaca;">
+        <table border="1">
+            <tr>
+                <th>ClientName</th>
+                <th>SGD (NOT PAID)</th>
+                <th>USD (NOT PAID)</th>
+                <th>SGD (PAID)</th>
+                <th>USD (PAID)</th>
+                <th>INR (PAID)</th>
+                <th>SGD (ORDER_PROCESSING)</th>
+                <th>USD (ORDER_PROCESSING)</th> 
+                <th>INVOICE COUNT</th> 
+              </tr>
+              {% for item in combined_pivot_table %}
+              <tr>
+                <td>{{ item.ClientName|upper }}</td>
+                <td>{{ item.NOT_PAID_SGD|default_if_none:' '|floatformat:"2" }}</td>
+                <td>{{ item.NOT_PAID_USD|default_if_none:' '|floatformat:"2" }}</td>
+                <td>{{ item.PAID_SGD|default_if_none:' '|floatformat:"2" }}</td>
+                <td>{{ item.PAID_USD|default_if_none:' '|floatformat:"2" }}</td>
+                <td>{{ item.PAID_INR|default_if_none:' '|floatformat:"2" }}</td>
+                <td>{{ item.ORDER_PROCESSING_SGD|default_if_none:' '|floatformat:"2" }}</td>
+                <td>{{ item.ORDER_PROCESSING_USD|default_if_none:' '|floatformat:"2" }}</td>
+                <td>{{ item.InvoiceCount }}</td>  
+              </tr>
+              {% endfor %}
+            <tr>
+                <td><strong>Totals</strong></td>
+                <td><strong>{{ notpaid_sgd|floatformat:"2" }}</strong></td>
+                <td><strong>{{ notpaid_usd|floatformat:"2" }}</strong></td>
+                <td><strong>{{ paid_sgd|floatformat:"2" }}</strong></td>
+                <td><strong>{{ paid_usd|floatformat:"2" }}</strong></td>
+                <td><strong>{{ paid_inr|floatformat:"2" }}</strong></td>
+                <td><strong>{{ order_processing_sgd|floatformat:"2" }}</strong></td>
+                <td><strong>{{ order_processing_usd|floatformat:"2" }}</strong></td>
+                <td><strong>{{ total_invoice_count }}</strong></td>
+            </tr>
+        </table>
+    </div>
+    
+    
+</body>
+
+</html>

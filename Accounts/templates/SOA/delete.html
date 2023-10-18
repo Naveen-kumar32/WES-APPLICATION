@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Delete Testdata</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.7.2/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Delete Testdata</h1>
+    <p>Are you sure you want to delete the following testdata?</p>
+    <table>
+        <tbody>
+            <tr>
+                <th>PONo</th>
+                <td>{{ test1.PONo }}</td>
+            </tr>
+            <tr>
+                <th>ClientName</th>
+                <td>{{ test1.ClientName }}</td>
+            </tr>
+            <tr>
+                <th>InvoiceNo</th>
+                <td>{{ test1.InvoiceNo }}</td>
+            </tr>
+            <tr>
+                <th>Invoiceamount</th>
+                <td>{{ test1.Invoiceamount }}</td>
+            </tr>
+            <tr>
+                <th>paymentstatus</th>
+                <td>{{ test1.paymentstatus }}</td>
+            </tr>
+            <tr>
+                <th>Invcurrency</th>
+                <td>{{ test1.Invcurrency }}</td>
+            </tr>
+            <tr>
+                
+                <th>outstandingBalance</th>
+                <td>{{ test1.outstandingBalance }}</td>
+
+            </tr>
+        </tbody>
+    </table>
+    <br>
+    <form id="deleteForm" method="post" action="{% url 'Accounts:delete' test1.id %}">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+        <button type="button" onclick="back()">Cancel</button>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            // Submit the form using AJAX
+            $('#deleteForm').submit(function(event) {
+                event.preventDefault(); // Prevent form submission
+                var formData = $(this).serialize(); // Serialize form data
+                
+                $.ajax({
+                    url: $(this).attr('action'), // Use the form's action URL
+                    type: 'POST', // Set the request method to POST
+                    data: formData, // Form data
+                    success: function(response) {
+                        
+                        window.history.back(); 
+                    },
+                    error: function(xhr, status, error) {
+                        // Handle the error
+                    }
+                });
+            });
+        });
+        function back() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>
