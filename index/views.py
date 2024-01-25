@@ -1,154 +1,149 @@
 from django.shortcuts import render
 
 # Create your views here.
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseRedirect, HttpResponse
-from django.urls import reverse
-from io import BytesIO 
-from xhtml2pdf import pisa  
-from django.http import HttpResponse
-import csv
 from django.http import JsonResponse
-import os
-from django.db.models import Q
-from django.conf import settings
-from decimal import Decimal
-from django.db import transaction
-from django_pivot.pivot import pivot
-from collections import defaultdict
-from PIL import Image
-import base64
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from index.models import Login,Logisticslogin
-# from .forms import SOAForm,DHLForm,commercialinvoiceForm,packinglistForm,dodnnumberForm,wesnewsgForm
-from django.db.models import F,ExpressionWrapper, IntegerField
+from django.contrib.auth import login as auth_login
+from django.views.decorators.csrf import csrf_protect,csrf_exempt
+from django.views.decorators.http import require_POST
+from .models import UserProfile,Radio
+from .forms import SignUpForm,LoginForm
+from django.contrib.auth.models import User
 
 
-
-def loginindex(request):
-
-    return render(request, 'loginindex.html')
-
-
-def Accountslogin(request):
-    
+@csrf_protect
+def signup(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        
-        try:
-            # Try to retrieve the user from the database
-            user = Login.objects.get(username=username)
-            
-            
-            if user.password == password:
-                # Passwords match, consider the user as logged in
-                request.session['user_id'] = user.id
-                return redirect('Accounts:index') 
-               
-               
-            else:
-                
-                messages.error(request, 'Invalid username or password!')
-        except Login.DoesNotExist:
-            messages.error(request, 'User does not exist!')
-    return render(request, 'accountslogin.html')        
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            UserProfile.objects.create(user=user, department=form.cleaned_data['department'])
+            auth_login(request, user)
+            messages.success(request, 'Account created successfully. You are now logged in.')
+            return redirect('index:login')
+            # Redirect based on department
+            # if user.profile.department == 'masteruser':
+            #     users = User.objects.all()
+            #     return render(request, 'login/master.html', {'users': users})
+            # elif user.profile.department == 'accounts':
+            #     return redirect('index:accounts')
+            # elif user.profile.department == 'logistics':
+            #     return redirect('index:logistics')
+            # elif user.profile.department == 'procurement':
+            #     return redirect('index:procurement')
+            # elif user.profile.department == 'management':
+            #     return redirect('index:management')
 
-def Logistics(request):
-    
-
-    print('hidishdsudsjdhsdsjdsjdsjdsjdshn')
+    else:
+        print('kumar')
+        form = SignUpForm()
+    return render(request, 'login/signup.html', {'form': form})
+@csrf_protect
+def user_login(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        
-        try:
-            # Try to retrieve the user from the database
-            user = Logisticslogin.objects.get(username=username)
-            print(user)
-            
-            if user.password == password:
-                # Passwords match, consider the user as logged in
-                request.session['user_id'] = user.id
-                return redirect('Logistics:logindex') 
-                
-               
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                try:
+                    user_profile = UserProfile.objects.get(user=user)
+                    if user_profile.department == 'masteruser':
+                        users = User.objects.select_related('profile').all()
+                        radio  = Radio.objects.get(id=1)
+                        print('start')
+                        print(radio)
+                        print('end')
+                        return render(request, 'login/master.html', {'users': users,'radio':radio})
+                    elif user_profile.department == 'accounts':
+                        users = User.objects.select_related('profile').all()
+                        radio  = Radio.objects.get(id=1)
+                        print('start')
+                        print(radio)
+                        print('end')
+                        return redirect('Accounts:index')
+                    elif user_profile.department == 'logistics':
+                        users = User.objects.select_related('profile').all()
+                        radio  = Radio.objects.get(id=1)
+                        print('start')
+                        print(radio)
+                        print('end')
+                        return redirect('Logistics:logindex')
+                    # Handle other departments as needed
+                except UserProfile.DoesNotExist:
+                    messages.error(request, 'User profile not found.')
             else:
-                
-                messages.error(request, 'Invalid username or password!')
-        except Logisticslogin.DoesNotExist:
-            messages.error(request, 'User does not exist!')
-    return render(request, 'Logistics.html')
+                messages.error(request, 'User details not found.')
+    else:
+        form = LoginForm()
+
+    # Add this block to handle unauthorized access attempts
+    # if request.user.is_authenticated:
+    #     return redirect('index:login')
+    radio  = Radio.objects.get(id=1)
+    print('start')
+    print(radio)
+    print('end')
+    return render(request, 'login/login.html', {'form': form,'radio':radio})
+
+# @login_required(login_url='index:login')  # Specify the login URL for redirection
+# def index(request):
+#     return render(request, 'login/index.html')
+@csrf_protect
+def user_logout(request):
+    logout(request)
+    return redirect('index:login')
+
+@login_required(login_url='index:login')
+def master(request):
+    return render(request, 'login/master.html')
 
 
-def Procurement(request):
-    
+
+@login_required(login_url='index:login')
+def user_delete_view(request, user_id):
+    # Ensure that only 'masteruser' can access this view
+    if not request.user.profile.department == 'masteruser':
+        return redirect('index:login')
+
+    user = get_object_or_404(User, id=user_id)
+
+    # Check if the user has a profile and delete it
+    try:
+        user_profile = UserProfile.objects.get(user=user)
+        user_profile.delete()
+    except UserProfile.DoesNotExist:
+        pass
+
+    # Delete the user
+    user.delete()
+    users = User.objects.select_related('profile').all()
+    messages.success(request, 'User deleted successfully.')
+    return render(request, 'login/master.html', {'users': users})
+
+@csrf_exempt
+@require_POST
+@login_required(login_url='index:login')
+def updatelogin(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        
-        try:
-            # Try to retrieve the user from the database
-            user = Login.objects.get(username=username)
-            
-            
-            if user.password == password:
-                # Passwords match, consider the user as logged in
-                request.session['user_id'] = user.id
-                return redirect('Accounts:index') 
-                
-               
-            else:
-                
-                messages.error(request, 'Invalid username or password!')
-        except Login.DoesNotExist:
-            messages.error(request, 'User does not exist!')            
+        option_value = request.POST.get('signup-option')
 
-    return render(request, 'accountslogin.html')
+        # Assuming you have a Radio model instance associated with the user
+        radio_instance, created = Radio.objects.get_or_create(id=1)
 
-def Management(request):
-    
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        
-        try:
-            # Try to retrieve the user from the database
-            user = Login.objects.get(username=username)
-            
-            
-            if user.password == password:
-                # Passwords match, consider the user as logged in
-                request.session['user_id'] = user.id
-                return redirect('Accounts:index') 
-                
-               
-            else:
-                
-                messages.error(request, 'Invalid username or password!')
-        except Login.DoesNotExist:
-            messages.error(request, 'User does not exist!')
+        # Update the radio option
+        radio_instance.radio = option_value
+        radio_instance.save()
 
-def Viewonly(request):
-    
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        
-        try:
-            # Try to retrieve the user from the database
-            user = Login.objects.get(username=username)
-            
-            
-            if user.password == password:
-                # Passwords match, consider the user as logged in
-                request.session['user_id'] = user.id
-                return redirect('Accounts:index') 
-                
-               
-            else:
-                
-                messages.error(request, 'Invalid username or password!')
-        except Login.DoesNotExist:
-            messages.error(request, 'User does not exist!')
+        users = User.objects.select_related('profile').all()
+        radio = Radio.objects.get(id=1)
 
+        # Redirect after a successful POST (PRG pattern)
+        return redirect('index:master')
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Invalid request'})

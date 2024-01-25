@@ -1,0 +1,22 @@
+# .gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+db.sqlite3
+/venv/
+/static/
+/media/
+
+# Exclude specific folders
+/Accounts/
+/index/
+/Logistics/
+/WES_APPLICATION/
+
+# Exclude specific files
+/manage.py
+/requirements.txt
+/filtered_data.xlsx
+/full_data.xlsx

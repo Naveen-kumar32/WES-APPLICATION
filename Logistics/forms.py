@@ -1,6 +1,8 @@
 from django import forms
-from .models import DHL,CommercialInvoice,DoDnNumber,WesNewSg,CommercialPacl,InvoiceNumber,DoNumber,Proforma
+from .models import DHL,CommercialInvoice,DoDnNumber,CommercialPacl,DoNumber,Ordertracking
 
+# from django.core.validators import RegexValidator
+# from django.contrib.admin import widgets
 
 class DHLForm(forms.ModelForm):   
     class Meta:
@@ -15,7 +17,7 @@ class DHLForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             if field_name not in ['id']:
                 field.required = False
-
+                
 class commercialinvoiceForm(forms.ModelForm):   
     class Meta:
         model = CommercialInvoice
@@ -34,7 +36,7 @@ class dodnnumberForm(forms.ModelForm):
     class Meta:
         model = DoDnNumber
 
-        fields = ['ID','DO_DN_NUMBER','DATE','VESSEL_NAME','WES_NUMBER', 'PO_NUMBER','INCHARGE','Remarks']
+        fields = ['ID','DO_DN_NUMBER','DATE','VESSEL_NAME','WES_NUMBER', 'PO_NUMBER','INCHARGE','REMARK']
   
 
 
@@ -43,34 +45,6 @@ class dodnnumberForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             if field_name not in ['ID']:
                 field.required = False
-
-# class packinglistForm(forms.ModelForm):   
-#     class Meta:
-#         model = PackingList
-
-#         fields = ['ID','PACKING_LIST_NUMBER','DATE','VESSEL_NAME','WES_NUMBER', 'PO_NUMBER','INCHARGE','REMARKS']
-  
-
-
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         for field_name, field in self.fields.items():
-#             if field_name not in ['ID']:
-#                 field.required = False     
-
-class wesnewsgForm(forms.ModelForm):   
-    class Meta:
-        model = WesNewSg
-
-        fields = ['ID','INVOICE_NUMBER','DATE','VESSEL_NAME','WES_NUMBER', 'PO_NUMBER','INCHARGE','INVOICE_TYPE','SIGNED_DN','Remarks']
-  
-
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            if field_name not in ['ID']:
-                field.required = False     
 
 class commercialpaclForm(forms.ModelForm):   
     class Meta:
@@ -86,19 +60,6 @@ class commercialpaclForm(forms.ModelForm):
             if field_name not in ['ID']:
                 field.required = False
 
-class invoicenumberForm(forms.ModelForm):   
-    class Meta:
-        model = InvoiceNumber
-
-        fields = ['ID','INVOICE_NUMBER','DATE','VESSEL_NAME','WES_NUMBER','PO_NUMBER','INCHARGE','REMARK']
-  
-
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            if field_name not in ['ID']:
-                field.required = False
 
 class donumberForm(forms.ModelForm):   
     class Meta:
@@ -115,16 +76,32 @@ class donumberForm(forms.ModelForm):
                 field.required = False
 
 
-class proformaForm(forms.ModelForm):   
+
+class OrdertrackingForm(forms.ModelForm):   
     class Meta:
-        model = Proforma
+        model = Ordertracking
 
-        fields = ['ID','PROFORMA_INVOICE_NUMBER','DATE','VESSEL_NAME','WES_NUMBER','PO_NUMBER','INCHARGE','STATUS','REMARK']
-  
+        fields = ['ID','Branch','WES_NO','PO_NO','PO_Date', 'Client_Name','Vessel_Name','Supplier_Name','Forwarder_name','AWB_NO','Status','Status_Date','InCharger','Dolibar','Remarks']
+ 
+    Branch = forms.CharField(required=False)
+    WES_NO = forms.CharField(required=False)
+    PO_NO = forms.CharField(required=False)
+    PO_Date = forms.CharField(required=False)
+    Client_Name = forms.CharField(required=False)
+    Vessel_Name = forms.CharField(required=False)
+    Supplier_Name = forms.CharField(required=False)
+    Forwarder_name = forms.CharField(required=False)
+    AWB_NO = forms.CharField(required=False)
+    Status = forms.CharField(required=False)
+    Status_Date = forms.CharField(required=False)
+    InCharger = forms.CharField(required=False)
+    Dolibar = forms.CharField(required=False)
+    Remarks = forms.CharField(required=False)
 
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def _init_(self, *args, **kwargs):
+        super()._init_(*args, **kwargs)
         for field_name, field in self.fields.items():
             if field_name not in ['ID']:
-                field.required = False
+                field.required=False      
+
+

@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class DHL(models.Model):
   
   id = models.IntegerField(primary_key=True)
@@ -35,7 +36,7 @@ class DHL(models.Model):
         return str(self.id)
   class Meta:
         managed = True
-        db_table = 'dhl' 
+        db_table = 'dhl'  
 
 class CommercialInvoice(models.Model):
   
@@ -54,8 +55,7 @@ class CommercialInvoice(models.Model):
         return str(self.ID)
   class Meta:
         managed = True
-        db_table = 'commercialinvoice'
-
+        db_table = 'commercial_invoice'
 
 class DoDnNumber(models.Model):
   
@@ -66,53 +66,14 @@ class DoDnNumber(models.Model):
   WES_NUMBER = models.CharField(max_length=100)
   PO_NUMBER = models.CharField(max_length=100)
   INCHARGE = models.CharField(max_length=100)
-  Remarks = models.CharField(max_length=100)
+  REMARK = models.CharField(max_length=100)
   
     
   def __str__(self):
         return str(self.id)
   class Meta:
         managed = True
-        db_table = 'dononum'  
-
-# class PackingList(models.Model):
-  
-#   ID = models.IntegerField(primary_key=True)
-#   PACKING_LIST_NUMBER = models.CharField(max_length=100)
-#   DATE = models.CharField(max_length=100)
-#   VESSEL_NAME = models.CharField(max_length=100)
-#   WES_NUMBER = models.CharField(max_length=100)
-#   PO_NUMBER = models.CharField(max_length=100)
-#   INCHARGE = models.CharField(max_length=100)
-#   REMARKS = models.CharField(max_length=100)
-  
-    
-#   def __str__(self):
-#         return str(self.id)
-#   class Meta:
-#         managed = True
-#         db_table = 'packinglistnum'
-    
-
-class WesNewSg(models.Model):
-  
-  ID = models.IntegerField(primary_key=True)
-  INVOICE_NUMBER = models.CharField(max_length=100)
-  DATE = models.CharField(max_length=100)
-  VESSEL_NAME = models.CharField(max_length=100)
-  WES_NUMBER = models.CharField(max_length=100)
-  PO_NUMBER = models.CharField(max_length=100)
-  INCHARGE = models.CharField(max_length=100)
-  INVOICE_TYPE = models.CharField(max_length=100)
-  SIGNED_DN = models.CharField(max_length=100)
-  Remarks = models.CharField(max_length=100)
-  
-    
-  def __str__(self):
-        return str(self.id)
-  class Meta:
-        managed = True
-        db_table = 'wesnewsg'
+        db_table = 'do_dn_number'  
 
 class CommercialPacl(models.Model):
   
@@ -132,24 +93,6 @@ class CommercialPacl(models.Model):
         managed = True
         db_table = 'commercial_pacl'        
 
-class InvoiceNumber(models.Model):
-  
-  ID = models.IntegerField(primary_key=True)
-  INVOICE_NUMBER = models.CharField(max_length=100)
-  DATE = models.CharField(max_length=100)
-  VESSEL_NAME = models.CharField(max_length=100)
-  WES_NUMBER = models.CharField(max_length=100)
-  PO_NUMBER = models.CharField(max_length=100)
-  INCHARGE = models.CharField(max_length=100)
-  REMARK = models.CharField(max_length=100)
-  
-    
-  def __str__(self):
-        return str(self.ID)
-  class Meta:
-        managed = True
-        db_table = 'invoice_number'        
-
 class DoNumber(models.Model):
   
   ID = models.IntegerField(primary_key=True)
@@ -168,24 +111,27 @@ class DoNumber(models.Model):
         managed = True
         db_table = 'do_number'                
 
-
-class Proforma(models.Model):
+class Ordertracking(models.Model):
   
   ID = models.IntegerField(primary_key=True)
-  PROFORMA_INVOICE_NUMBER = models.CharField(max_length=100)
-  DATE = models.CharField(max_length=100)
-  VESSEL_NAME = models.CharField(max_length=100)
-  WES_NUMBER = models.CharField(max_length=100)
-  PO_NUMBER = models.CharField(max_length=100)
-  INCHARGE = models.CharField(max_length=100)
-  STATUS = models.CharField(max_length=100)
-  REMARK = models.CharField(max_length=100)
-
-
+  Branch = models.CharField(max_length=100)
+  WES_NO = models.CharField(max_length=100)
+  PO_NO = models.CharField(max_length=100)
+  PO_Date = models.CharField(max_length=100)
+  Client_Name = models.CharField(max_length=100)
+  Vessel_Name = models.CharField(max_length=100)
+  Supplier_Name = models.CharField(max_length=100)
+  Forwarder_name = models.CharField(max_length=100)
+  AWB_NO = models.CharField(max_length=100)
+  Status = models.CharField(max_length=100)
+  Status_Date = models.CharField(max_length=100)
+  InCharger = models.CharField(max_length=100)
+  Dolibar = models.CharField(max_length=100)
+  Remarks = models.CharField(max_length=100)
   
     
-  def __str__(self):
+  def _str_(self):
         return str(self.ID)
   class Meta:
         managed = True
-        db_table = 'proforma'                                                         
+        db_table = 'order_tracking'      

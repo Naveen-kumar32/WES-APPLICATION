@@ -14,27 +14,35 @@
 
 
   <style>
+
+
     table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 20px;
       word-break: break-all;
       white-space: nowrap;
-
+      background-color: #ccc;
+     
     }
+/* Specific selector for header cells within the #filtered-data table */
+    #filtered-data thead th {
+    font-weight: bold;
+    background-color: #3498db; /* Blue background color for the header */
+    padding: 12px;
+    color: #fff;
+    
+}
 
     table th,
     table td {
       padding: 2px;
       border: 1px solid #ddd;
       font-size: 11px;
+      text-align: center;
+      
     }
-
-    table th {
-      font-weight: bold;
-      background-color: #0fa6d4;
-    }
-
+ 
     td {
       white-space: nowrap;
       overflow: hidden;
@@ -59,9 +67,8 @@
 
     .delete-button {
       height: 100%;
-      /* line-height: 20px;  */
+      /* line-height: 20px;  */ 
       width: 100%;
-
     }
 
     .update-link {
@@ -77,21 +84,20 @@
         height: 297mm;
         margin: 0;
         padding: 20mm;
-        overflow-wrap: break-word;
+        overflow-wrap: break-word;  
       }
 
       table {
         width: 100%;
         border-collapse: collapse;
-      }
+      } 
 
       table th,
       table td {
         padding: 4px;
         border: 1px solid black;
         font-size: 4px;
-        page-break-inside: avoid;
-        font-size: 11px;
+        page-break-inside: avoid; 
       }
 
       thead {
@@ -108,8 +114,9 @@
         width: 100%;
         margin-top: 0px;
         page-break-inside: avoid;
-      }
+       
 
+      }
       .footer {
         position: fixed;
         bottom: 0;
@@ -118,7 +125,6 @@
         font-size: 12px;
         width: 100%;
         height: 200px;
-
       }
 
       .page-number:after {
@@ -160,18 +166,18 @@
   <table class="table" id="filtered-data">
     <thead>
       <tr>
-        <th>id</th>
+        <th>ID</th>
         <th>WES REF NO</th>
-        <th>PONo</th>
-        <th>Duedate</th>
-        <th>InvoiceNo</th>
-        <th>Invoiceamount</th>
-        <th>paymentstatus</th>
-        <th>Invcurrency</th>
-        <th>outstandingBalance</th>
+        <th>Po No</th>
+        <th>Due Date</th>
+        <th>Invoice No</th>
+        <th>Invoice Amount</th>
+        <th>Payment Status</th>
+        <th>Invoice Currency</th>
+        <th>Outstanding Balance</th>
         <!-- <th>new status</th> -->
       </tr>
-    </thead>
+    </thead>  
     <tbody>
       {% for data in test1 %}
       <tr data-id="{{ data.id }}">
@@ -184,6 +190,7 @@
         <td class="expandable">{{ data.paymentstatus }}</td>
         <td class="expandable">{{ data.Invcurrency }}</td>
         <td class="expandable out-standing">{{ data.outstandingBalance|floatformat:"2" }}</td>
+        <!-- <td class="expandable">{{ data.newstatus }}</td> -->
         <td class="delete-cell expandable">
           <button class="delete-button btn btn-sm btn-danger" style="width: 100%;height:100%;" data-id="{{ data.id }}">Delete</button>
         </td>
@@ -194,13 +201,14 @@
       </tr>
       {% endfor %}
       <tr>
-        <td colspan="5" style="border-right: none;">Total Invoice Amount: </td>
+        <td colspan="4" style="border-right: none;border-bottom: none;"></td>
+        <td colspan="1" style="border-right: none; font-size: 13px;"><b>Total Invoice Amount:</b></td>
         <!-- <td colspan="3"></td> -->
 
-        <td  id="total-invoice-amount" style="border-left: none;"></td>
-        <td colspan="1" style="border-bottom: none;"></td>
-        <td style="border-right: none;">Total outstanding Amount: </td>
-        <td style="border-left: none;" id="total-outstanding-amount"></td>
+        <td  id="total-invoice-amount" style="border-left: none;font-weight: bold;font-size: 13px;"></td>
+        <td colspan="1" style="border-bottom: none; "></td>
+        <td style="border-right: none;font-size: 13px;"><b>Total Outstanding Amount:</b> </td>
+        <td style="border-left: none; font-weight: bold;font-size: 13px;" id="total-outstanding-amount"></td>
       </tr>
     </tbody>
   </table>
@@ -277,7 +285,7 @@
         url: `/delete/${rowId}/`,
         type: 'DELETE', 
         beforeSend: function (xhr) {
-          xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+          xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}'); 
         },
         success: function (response) {
           if (response.message === 'Row deleted successfully.') {
@@ -292,11 +300,11 @@
         }
       });
     }
-
-    
-
+          
   </script>
-
 </body>
-
 </html>
+                         
+
+
+

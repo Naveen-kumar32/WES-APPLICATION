@@ -144,7 +144,8 @@ def filter(request):
     filter_newstatus = request.GET.get('filter_newstatus')
     filter_currency1 = request.GET.get('filter_currency1')
 
-    test1 = SOA.objects.all()
+    test1 = SOA.objects.all().order_by('-id')
+
 
     if filter_ClientName:
         test1 = test1.filter(ClientName=filter_ClientName)

@@ -7,12 +7,15 @@ app_name = 'index'
 
 urlpatterns = [ 
 
-    path('', views.loginindex, name='loginindex'),
-    path('Accountslogin/', views.Accountslogin, name='Accountslogin'),
-    path('Procurement/', views.Procurement, name='Procurement'),
-    path('Logistics/', views.Logistics, name='Logistics'),
-    path('Management/', views.Management, name='Management'),
-    path('Viewonly/', views.Viewonly, name='Viewonly'),
+    path('signup/', views.signup, name='signup'),
+    path('', views.user_login, name='login'),  # Fix the path for the login view to be an empty string
+    
+     
+    path('logout/', views.user_logout, name='logout'),
+    path('user/<int:user_id>/', views.master, name='master'),
+    path('user/<int:user_id>/delete/', views.user_delete_view, name='user_delete'),
+    
+    path('updatelogin/', views.updatelogin, name='updatelogin'),
     
     
     

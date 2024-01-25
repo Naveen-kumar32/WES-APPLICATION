@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Testdata List</title>
+    <title>Order Tracking</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.7.2/dist/css/bootstrap.min.css">
 
     <!-- Include Flatpickr CSS -->
@@ -11,6 +12,7 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.js"></script>
+    {% load static %}
 
     <style>
         /* Additional styling for the datepicker */
@@ -108,26 +110,32 @@
     <div style="padding: 20px;height: 100vh;width: auto;background-color: #d8d7d8;">
 
 
-    
-    <div style="display: flex;margin-top: 30px;">
+     
 
-        <a class="btn custom-button" href="{% url 'Logistics:dhlindex' %}" target="_blank">DHL</a>
+           
 
-        <a class="btn custom-button" href="{% url 'Logistics:wesiindex' %}" target="_blank">Number Series WES-I</a>
-
-        <a class="btn custom-button" href="{% url 'Logistics:wessindex' %}" target="_blank">Number Series WES-S</a>
 
        
-    </div>
-   
-</div>
+        <div style="display: flex;margin-top: 30px;">
 
+            <a class="btn custom-button" href="{% url 'Logistics:dhlindex' %}" target="_blank">DHL</a>
+
+            <a class="btn custom-button" href="{% url 'Logistics:commercialinvoice' %}" target="_blank">Commercial Invoice</a>
+        
+            <a class="btn custom-button" href="{% url 'Logistics:commercialpacl' %}" target="_blank">Commercial Pacl</a>
+        
+            <a class="btn custom-button" href="{% url 'Logistics:dodnnumber' %}" target="_blank">DoDnNumber</a>
+        
+            <a class="btn custom-button" href="{% url 'Logistics:donumber' %}" target="_blank">DoNumber</a>
+        
+            <a class="btn custom-button" href="{% url 'Logistics:ordertracking' %}" target="_blank">Order Tracking</a>
+          
+    </div>
+
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
-
    
-
-
 </body>
 </html>

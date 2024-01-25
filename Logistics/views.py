@@ -19,11 +19,14 @@ from collections import defaultdict
 from PIL import Image
 import base64
 from django.contrib import messages
-from .models import DHL,CommercialInvoice,DoDnNumber,WesNewSg,CommercialPacl,InvoiceNumber,DoNumber,Proforma
-from .forms import DHLForm,commercialinvoiceForm,dodnnumberForm,wesnewsgForm,commercialpaclForm,invoicenumberForm,donumberForm,proformaForm
+from .models import DHL,CommercialInvoice,DoDnNumber,CommercialPacl,DoNumber,Ordertracking
+from .forms import DHLForm,commercialinvoiceForm,dodnnumberForm,commercialpaclForm,donumberForm,OrdertrackingForm
 from django.db.models import F,ExpressionWrapper, IntegerField
-
-
+import openpyxl
+from openpyxl.utils import get_column_letter
+from django.http import FileResponse
+import re
+from openpyxl.styles import Font, PatternFill
 
 def logindex(request):
 
@@ -34,7 +37,7 @@ def dhl(request):
     filter_ToCountry = request.GET.get('filter_ToCountry')
     filter_Weight_Kg = request.GET.get('filter_Weight_Kg')
 
-    test1 = DHL.objects.all()
+    test1 = DHL.objects.all().order_by('-id')
 
     if filter_FromCountry:
         test1 = test1.filter(From_Country=filter_FromCountry)
@@ -43,7 +46,7 @@ def dhl(request):
     if filter_Weight_Kg:
         test1 = test1.filter(Weight_Kg=filter_Weight_Kg)
 
-    filtered_data = list(test1.values())    
+    filtered_data = list(test1.values())
     total_rows = len(filtered_data)
     context = {
         'test1': test1,
@@ -55,13 +58,13 @@ def dhl(request):
     # return JsonResponse({'total_rows': total_rows})
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         return JsonResponse(filtered_data, safe=False)
-    
-    
+
+
     return render(request, 'DHL/dhl.html', context)
 
 
 def get_dropdown_options1(request):
- 
+
     selected_fromcountry = request.GET.get('From_Country')
     test1 = DHL.objects.all()
     if selected_fromcountry:
@@ -71,18 +74,18 @@ def get_dropdown_options1(request):
     else:
         to_country_options = []
         weight1_options = []
-    
+
     response_data = {
         'to_country_options': to_country_options,
         'weight1_options': weight1_options,
     }
-  
+
     return JsonResponse(response_data)
 
 
 def get_dropdown_optionstocountry(request):
 
-    selected_fromcountry = request.GET.get('From_Country') 
+    selected_fromcountry = request.GET.get('From_Country')
     selected_tocountry = request.GET.get('To_Country')
     test1 = DHL.objects.all()
     if selected_tocountry:
@@ -91,11 +94,11 @@ def get_dropdown_optionstocountry(request):
     else:
 
         weight1_options = []
-    
+
     response_data = {
         'weight1_options': weight1_options,
     }
-  
+
     return JsonResponse(response_data)
 
 
@@ -107,7 +110,7 @@ def dhlindex(request):
             filter_FromCountry  = form.cleaned_data['From_Country']
             filter_ToCountry  = form.cleaned_data['To_Country']
             filter_Weight_Kg = form.cleaned_data['Weight_Kg']
-            url = reverse('Logistics:filter')
+            url = reverse('testcase:filter')
             url += f'?filter_FromCountry={filter_FromCountry}&filter_ToCountry={filter_ToCountry}&filter_Weight_Kg={filter_Weight_Kg}'
             return HttpResponseRedirect(url)
     else:
@@ -117,21 +120,21 @@ def dhlindex(request):
     if request.GET.get('filter_FromCountry'):
         filter_FromCountry1 = request.GET.get('filter_FromCountry')
         # Perform any filtering or processing based on the filter_ClientName value
-        
+
         if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
             selectedFromCountry = request.GET.get('selectedFromCountry')
             print(f"Received selected_client_name: { selectedFromCountry }")
             # Return a JSON response if it's an AJAX request
             return JsonResponse({'message': 'Filtered data'})
     test1 = DHL.objects.all()
-  
-    
+
+
     filter_FromCountry = request.GET.get('filter_FromCountry')
     filter_ToCountry = request.GET.get('filter_ToCountry')
     filter_Weight_Kg = request.GET.get('filter_Weight_Kg')
 
     print(filter_FromCountry)
-    
+
     if filter_FromCountry:
         test1 = test1.filter(From_Country=filter_FromCountry)
     if filter_ToCountry:
@@ -142,7 +145,7 @@ def dhlindex(request):
     unique_FromCountry = DHL.objects.order_by('From_Country').values_list('From_Country', flat=True).distinct()
     unique_ToCountry = DHL.objects.order_by('To_Country').values_list('To_Country', flat=True).distinct()
     unique_Weight_Kg = DHL.objects.order_by('Weight_Kg').values_list('Weight_Kg', flat=True).distinct()
-        
+
     print('hi')
     context = {
         'form': form,
@@ -151,51 +154,73 @@ def dhlindex(request):
         'filter_ToCountry': filter_ToCountry,
         'filter_Weight_Kg': filter_Weight_Kg,
         'unique_FromCountry': unique_FromCountry,
-        'unique_ToCountry': unique_ToCountry,  
-        'unique_Weight_Kg': unique_Weight_Kg,   
+        'unique_ToCountry': unique_ToCountry,
+        'unique_Weight_Kg': unique_Weight_Kg,
     }
     return render(request, 'DHL/dhlindex.html', context)
 
 
 def dhlexcel(request):
-    filter_FromCountry = request.GET.get('filter_FromCountry')
-    filter_ToCountry = request.GET.get('filter_ToCountry')
-    filter_Weight1 = request.GET.get('filter_Weight1')
-
-    filters = {}
-    if filter_FromCountry:
-        filters['From_Country'] = filter_FromCountry
-    if filter_ToCountry:
-        filters['To_Country'] = filter_ToCountry
-    if filter_Weight1:
-        filters['Weight_Kg'] = filter_Weight1
-
-    test1 = DHL.objects.filter(**filters)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Full Data"
+    testdata_objects = DHL.objects.all()
 
     # Define the desired fields for the CSV file
     fields = ['id'	,'WES_Ref',	'PO_NO'	,'Client_Name'	,'Ship_name',	'Client_Invoice_No'	,'INVOICE_DATE',	'Client_Frieght_Cost'	,'Client_Freight_Currency'
-              	,'Client_Freight_Cost_in_SGD'	,'DHL_Invoice_number'	,'AWB_NUMBER'	,'AMOUNT_INR'	,'DHL_AMOUNT_SGD',	'DHL_DUTY_TAX'	,'Invoice_date2',	
+              	,'Client_Freight_Cost_in_SGD'	,'DHL_Invoice_number'	,'AWB_NUMBER'	,'AMOUNT_INR'	,'DHL_AMOUNT_SGD',	'DHL_DUTY_TAX'	,'Invoice_date2',
                 'Due_Date'	,'Status',	'Paid_date',	'Transaction_number'	,'From_Country'	, 'To_Country',	'Weight_Kg','Dimension_Volume', 'Dimension_CM' ,
                 'Profit_and_Loss'	,'Remarks']
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="DHL.csv"'
+    for col_num, field in enumerate(fields, 1):
+        # col_letter = get_column_letter(col_num)
+        cell = ws.cell(row=1, column=col_num, value=field)
+        cell.font = openpyxl.styles.Font(bold=True)
 
-    writer = csv.writer(response)
-    
-    try:
-        # Write the header row
-        writer.writerow(fields)
+    # Write the data rows
+    for row_num, data in enumerate(testdata_objects, 2):
+        for col_num, field in enumerate(fields, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=getattr(data, field))
 
-        # Write the data rows
-        for data in test1:
-            row = [getattr(data, field) for field in fields]
-            writer.writerow(row)
+    file_path = "full_data.xlsx"
+    wb.save(file_path)
 
-    except Exception as e:
-        print("Error:", e)
+    response = FileResponse(open(file_path, 'rb'), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="full_data.xlsx'
 
     return response
+
+def dhlfullexcel(request):
+    # Get all Testdata objects without applying any filters
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Full Data"
+    testdata_objects = DHL.objects.all()
+
+    # Define the fields for the CSV file
+    fields = ['id'	,'WES_Ref',	'PO_NO'	,'Client_Name'	,'Ship_name',	'Client_Invoice_No'	,'INVOICE_DATE',	'Client_Frieght_Cost'	,'Client_Freight_Currency'
+              	,'Client_Freight_Cost_in_SGD'	,'DHL_Invoice_number'	,'AWB_NUMBER'	,'AMOUNT_INR'	,'DHL_AMOUNT_SGD',	'DHL_DUTY_TAX'	,'Invoice_date2',
+                'Due_Date'	,'Status',	'Paid_date',	'Transaction_number'	,'From_Country'	, 'To_Country',	'Weight_Kg','Dimension_Volume', 'Dimension_CM' ,
+                'Profit_and_Loss'	,'Remarks']
+    # Write the headers
+    for col_num, field in enumerate(fields, 1):
+        # col_letter = get_column_letter(col_num)
+        cell = ws.cell(row=1, column=col_num, value=field)
+        cell.font = openpyxl.styles.Font(bold=True)
+
+    # Write the data rows
+    for row_num, data in enumerate(testdata_objects, 2):
+        for col_num, field in enumerate(fields, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=getattr(data, field))
+
+    file_path = "full_data.xlsx"
+    wb.save(file_path)
+
+    response = FileResponse(open(file_path, 'rb'), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="full_data.xlsx'
+
+    return response
+
 
 def adddhl(request):
     if request.method == "POST":
@@ -300,9 +325,14 @@ def updatedhl(request, data_id):
     }
     return render(request, 'DHL/updatedhl.html', context)
 
+
 def commercialinvoice(request):
+ 
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    return render(request, 'WES-S-Numberseries/commercialinvoice.html')
+    
+    return render(request, 'commercialinvoice/commercialinvoice.html')
 
 def addci(request):
     if request.method == "POST":
@@ -310,7 +340,7 @@ def addci(request):
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:commercialinvoice')
+                return redirect('Logistics:commercialinvoice')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
@@ -330,7 +360,7 @@ def addci(request):
     
     } 
       
-    return render(request, 'WES-S-Numberseries/addci.html',context)
+    return render(request, 'commercialinvoice/addci.html',context)
 
 def addnewci(request):
     if request.method == "POST":
@@ -338,7 +368,7 @@ def addnewci(request):
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:commercialinvoice')
+                return redirect('Logistics:commercialinvoice')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
@@ -355,7 +385,7 @@ def addnewci(request):
     
     } 
       
-    return render(request, 'WES-S-Numberseries/addnewci.html',context)
+    return render(request, 'commercialinvoice/addnewci.html',context)
    
 def commercialinvoiceci(request):
       
@@ -374,13 +404,15 @@ def commercialinvoiceci(request):
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         return JsonResponse(filtered_data, safe=False)
     
-    return render(request,'WES-S-Numberseries/commercialinvoiceci.html', context)            
+    return render(request,'commercialinvoice/commercialinvoiceci.html', context)            
 
 def dodnnumber(request):
  
-  
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    return render(request, 'WES-S-Numberseries/dodnnumber.html')
+    
+    return render(request, 'dodnnumber/dodnnumber.html')
 def adddn(request):
       
     if request.method == "POST":
@@ -388,7 +420,7 @@ def adddn(request):
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:dodnnumber')
+                return redirect('Logistics:dodnnumber')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
@@ -408,7 +440,7 @@ def adddn(request):
     
     } 
       
-    return render(request, 'WES-S-Numberseries/adddn.html',context)
+    return render(request, 'dodnnumber/adddn.html',context)
 
 def addnewdn(request):
     if request.method == "POST":
@@ -416,7 +448,7 @@ def addnewdn(request):
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:dodnnumber')
+                return redirect('Logistics:dodnnumber')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
@@ -435,7 +467,7 @@ def addnewdn(request):
     
     } 
       
-    return render(request, 'WES-S-Numberseries/addnewdn.html',context)
+    return render(request, 'dodnnumber/addnewdn.html',context)
 def dodnnumberdn(request):
       
     test1 = DoDnNumber.objects.all().order_by('-ID')
@@ -452,88 +484,8 @@ def dodnnumberdn(request):
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         return JsonResponse(filtered_data, safe=False)
     
-    return render(request,'WES-S-Numberseries/dodnnumberdn.html', context)      
+    return render(request,'dodnnumber/dodnnumberdn.html', context)      
  
-
-
-def wesnewsg(request):
-  
-   
-    
-    
-    return render(request, 'WES-S-Numberseries/wesnewsg.html')
-def addwns(request):
-      
-    if request.method == "POST":
-        form = wesnewsgForm(request.POST)
-        if form.is_valid():
-            try:
-                form.save()
-                return redirect('testcase:wesnewsg')
-            except Exception as e:
-                return HttpResponse(f"An error occurred: {str(e)}")
-        else:
-            return HttpResponse("Form is not valid.")
-    else:
-        form = wesnewsgForm()
-
-    last_id = WesNewSg.objects.last().ID if WesNewSg.objects.exists() else 0
-    VESSEL_NAME = WesNewSg.objects.exclude(VESSEL_NAME__exact='').order_by('VESSEL_NAME').values_list('VESSEL_NAME', flat=True).distinct()
-
-    context = {
-        
-        'last_id': last_id + 1,
-        'form': form,
-        'VESSEL_NAME_options' : VESSEL_NAME
-    
-    } 
-      
-    return render(request, 'WES-S-Numberseries/addwns.html',context)
-def addnewwns(request):
-      
-    if request.method == "POST":
-        form = wesnewsgForm(request.POST)
-        if form.is_valid():
-            try:
-                form.save()
-                return redirect('testcase:wesnewsg')
-            except Exception as e:
-                return HttpResponse(f"An error occurred: {str(e)}")
-        else:
-            return HttpResponse("Form is not valid.")
-    else:
-        form = wesnewsgForm()
-
-    last_id = WesNewSg.objects.last().ID if WesNewSg.objects.exists() else 0
-
-    context = {
-        
-        'last_id': last_id + 1,
-        'form': form
-    
-    
-    
-    } 
-      
-    return render(request, 'WES-S-Numberseries/addnewwns.html',context)
-def wesnewsgwns(request):
-   
-    test1 = WesNewSg.objects.all().order_by('-ID')
-   
-
-    filtered_data = list(test1.values())    
-    total_rows = len(filtered_data)
-    context = {
-        'test1': test1,
-       
-        'total_rows':int(total_rows),
-    }
-    # return JsonResponse({'total_rows': total_rows})
-    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-        return JsonResponse(filtered_data, safe=False)
-    
-    return render(request,'WES-S-Numberseries/wesnewsgwns.html', context)
-
 
 def updateci(request, data_id):
     data = get_object_or_404(CommercialInvoice, pk=data_id)  # Use CommercialInvoice model
@@ -542,7 +494,7 @@ def updateci(request, data_id):
 
         if form.is_valid():
             form.save()
-            return redirect('testcase:commercialinvoiceci')
+            return redirect('Logistics:commercialinvoiceci')
     else:
         form = commercialinvoiceForm(instance=data) 
     
@@ -550,7 +502,7 @@ def updateci(request, data_id):
         'form': form,
         'data_id': data_id,
     }
-    return render(request, 'WES-S-Numberseries/updateci.html', context)    
+    return render(request, 'commercialinvoice/updateci.html', context)    
 
 def updatedn(request, data_id):
     data = get_object_or_404(DoDnNumber, pk=data_id)
@@ -559,7 +511,7 @@ def updatedn(request, data_id):
 
         if form.is_valid():
             form.save()
-            return redirect('testcase:dodnnumberdn')
+            return redirect('Logistics:dodnnumberdn')
     else:
         form = dodnnumberForm(instance=data) 
     
@@ -568,41 +520,15 @@ def updatedn(request, data_id):
         'data_id': data_id,
        
     }
-    return render(request, 'WES-S-Numberseries/updatedn.html', context)
+    return render(request, 'dodnnumber/updatedn.html', context)
 
-
-
-def updatewns(request, data_id):
-    data = get_object_or_404(WesNewSg, pk=data_id)
-    if request.method == 'POST':
-        form = wesnewsgForm(request.POST, instance=data)
-
-        if form.is_valid():
-            form.save()
-            return redirect('testcase:wesnewsgwns')
-    else:
-        form = wesnewsgForm(instance=data) 
+def commercialpacl(request):
+ 
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    context = {
-        'form': form,
-        'data_id': data_id,
-       
-    }
-    return render(request, 'WES-S-Numberseries/updatewns.html', context)  
-
-  
-
-def wessindex(request):
-   
-    return render(request, 'WES-S-Numberseries/wessindex.html') 
-
-def wesiindex(request):
-   
-    return render(request, 'WES-I-Numberseries/wesiindex.html') 
-
-def commercialpacl(request):    
     
-    return render(request, 'WES-I-Numberseries/commercialpacl.html')
+    return render(request, 'commercialpacl/commercialpacl.html')
 
 def addcp(request):
     if request.method == "POST":
@@ -610,7 +536,7 @@ def addcp(request):
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:commercialpacl')
+                return redirect('Logistics:commercialpacl')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
@@ -630,7 +556,7 @@ def addcp(request):
     
     } 
       
-    return render(request, 'WES-I-Numberseries/addcp.html',context)
+    return render(request, 'commercialpacl/addcp.html',context)
 
 def addnewcp(request):
     if request.method == "POST":
@@ -638,7 +564,7 @@ def addnewcp(request):
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:commercialpacl')
+                return redirect('Logistics:commercialpacl')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
@@ -655,7 +581,7 @@ def addnewcp(request):
     
     } 
       
-    return render(request, 'WES-I-Numberseries/addnewcp.html',context)
+    return render(request, 'commercialpacl/addnewcp.html',context)
    
 def commercialpaclcp(request):
       
@@ -674,7 +600,7 @@ def commercialpaclcp(request):
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         return JsonResponse(filtered_data, safe=False)
     
-    return render(request,'WES-I-Numberseries/commercialpaclcp.html', context)       
+    return render(request,'commercialpacl/commercialpaclcp.html', context)       
 
 
 
@@ -685,7 +611,7 @@ def updatecp(request, data_id):
 
         if form.is_valid():
             form.save()
-            return redirect('testcase:commercialpaclcp')
+            return redirect('Logistics:commercialpaclcp')
     else:
         form = commercialpaclForm(instance=data) 
     
@@ -693,108 +619,15 @@ def updatecp(request, data_id):
         'form': form,
         'data_id': data_id,
     }
-    return render(request, 'WES-S-Numberseries/updatecp.html', context) 
-
-def invoicenumber(request):
-   
-    
-    return render(request, 'WES-I-Numberseries/invoicenumber.html')
-
-def addin(request):
-    if request.method == "POST":
-        form = invoicenumberForm(request.POST)
-        if form.is_valid():
-            try:
-                form.save()
-                return redirect('testcase:invoicenumber')
-            except Exception as e:
-                return HttpResponse(f"An error occurred: {str(e)}")
-        else:
-            return HttpResponse("Form is not valid.")
-    else:
-        form = invoicenumberForm()
-
-    last_id = InvoiceNumber.objects.last().ID if InvoiceNumber.objects.exists() else 0
-    VESSEL_NAME = InvoiceNumber.objects.exclude(VESSEL_NAME__exact='').order_by('VESSEL_NAME').values_list('VESSEL_NAME', flat=True).distinct()
-
-    context = {
-        
-        'last_id': last_id + 1,
-        'form': form,
-        'VESSEL_NAME_options' : VESSEL_NAME
-    
-    
-    } 
-      
-    return render(request, 'WES-I-Numberseries/addin.html',context)
-
-def addnewin(request):
-    if request.method == "POST":
-        form = invoicenumberForm(request.POST)
-        if form.is_valid():
-            try:
-                form.save()
-                return redirect('testcase:invoicenumber')
-            except Exception as e:
-                return HttpResponse(f"An error occurred: {str(e)}")
-        else:
-            return HttpResponse("Form is not valid.")
-    else:
-        form = invoicenumberForm()
-
-    last_id = InvoiceNumber.objects.last().ID if InvoiceNumber.objects.exists() else 0
-
-    context = {
-        
-        'last_id': last_id + 1,
-        'form': form
-    
-    } 
-      
-    return render(request, 'WES-I-Numberseries/addnewin.html',context)
-   
-def invoicenumberin(request):
-      
-    
-    test1 = InvoiceNumber.objects.all().order_by('-ID')
-   
-
-    filtered_data = list(test1.values())    
-    total_rows = len(filtered_data)
-    context = {
-        'test1': test1,
-       
-        'total_rows':int(total_rows),
-    }
-    # return JsonResponse({'total_rows': total_rows})
-    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-        return JsonResponse(filtered_data, safe=False)
-    
-    return render(request,'WES-I-Numberseries/invoicenumberin.html', context)       
-
-
-
-def updatein(request, data_id):
-    data = get_object_or_404(InvoiceNumber, pk=data_id)  # Use CommercialInvoice model
-    if request.method == 'POST':
-        form = invoicenumberForm(request.POST, instance=data)
-
-        if form.is_valid():
-            form.save()
-            return redirect('testcase:invoicenumberin')
-    else:
-        form = invoicenumberForm(instance=data) 
-    
-    context = {
-        'form': form,
-        'data_id': data_id,
-    }
-    return render(request, 'WES-S-Numberseries/updatein.html', context)         
-
+    return render(request, 'commercialpacl/updatecp.html', context) 
 
 def donumber(request):
  
-    return render(request, 'WES-I-Numberseries/donumber.html')
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
+    
+    
+    return render(request, 'donumber/donumber.html')
 
 def adddo(request):
     if request.method == "POST":
@@ -802,7 +635,7 @@ def adddo(request):
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:donumber')
+                return redirect('Logistics:donumber')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
@@ -822,7 +655,7 @@ def adddo(request):
     
     } 
       
-    return render(request, 'WES-I-Numberseries/adddo.html',context)
+    return render(request, 'donumber/adddo.html',context)
 
 def addnewdo(request):
     if request.method == "POST":
@@ -830,7 +663,7 @@ def addnewdo(request):
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:donumber')
+                return redirect('Logistics:donumber')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
@@ -847,7 +680,7 @@ def addnewdo(request):
     
     } 
       
-    return render(request, 'WES-I-Numberseries/addnewdo.html',context)
+    return render(request, 'donumber/addnewdo.html',context)
    
 def donumberdo(request):
       
@@ -866,7 +699,7 @@ def donumberdo(request):
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         return JsonResponse(filtered_data, safe=False)
     
-    return render(request,'WES-I-Numberseries/donumberdo.html', context)       
+    return render(request,'donumber/donumberdo.html', context)       
 
 
 def updatedo(request, data_id):
@@ -876,7 +709,7 @@ def updatedo(request, data_id):
 
         if form.is_valid():
             form.save()
-            return redirect('testcase:donumberdo')
+            return redirect('Logistics:donumberdo')
     else:
         form = donumberForm(instance=data) 
     
@@ -884,245 +717,613 @@ def updatedo(request, data_id):
         'form': form,
         'data_id': data_id,
     }
-    return render(request, 'WES-I-Numberseries/updatedo.html', context)         
+    return render(request, 'donumber/updatedo.html', context)         
 
-def proforma(request):
+def download_ci_csv(request):
     
-    return render(request, 'WES-S-Numberseries/proforma.html')
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Full Data"
+    testdata_objects = CommercialInvoice.objects.all()
+    # Define the fields for the CSV file
+    fields = ['ID','COMMERCIAL_NUMBER','PACKING_LIST_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE', 'Remarks']
+    
+    # Write the headers
+    for col_num, field in enumerate(fields, 1):
+        # col_letter = get_column_letter(col_num)
+        cell = ws.cell(row=1, column=col_num, value=field)
+        cell.font = openpyxl.styles.Font(bold=True) 
 
-def addp(request):
+    # Write the data rows
+    for row_num, data in enumerate(testdata_objects, 2):
+        for col_num, field in enumerate(fields, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=getattr(data, field))
+
+    file_path = "full_data.xlsx"
+    wb.save(file_path)
+
+    response = FileResponse(open(file_path, 'rb'), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="full_data.xlsx'
+
+    return response
+
+
+def download_dodnnumber_csv(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Full Data"
+    testdata_objects = DoDnNumber.objects.all()
+    # Define the fields for the CSV file
+    fields = ['ID','DO_DN_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE', 'REMARK']
+    
+    # Write the headers
+    for col_num, field in enumerate(fields, 1):
+        # col_letter = get_column_letter(col_num)
+        cell = ws.cell(row=1, column=col_num, value=field)
+        cell.font = openpyxl.styles.Font(bold=True) 
+
+    # Write the data rows
+    for row_num, data in enumerate(testdata_objects, 2):
+        for col_num, field in enumerate(fields, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=getattr(data, field))
+
+    file_path = "full_data.xlsx"
+    wb.save(file_path)
+
+    response = FileResponse(open(file_path, 'rb'), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="full_data.xlsx'
+
+    return response   
+
+def download_commercial_Pacl_csv(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Full Data"
+    testdata_objects = CommercialPacl.objects.all()
+    # Define the fields for the CSV file
+    # Define the fields for the CSV file
+    fields = ['ID','COMMERCIAL_NUMBER', 'PACL_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE']
+   
+    for col_num, field in enumerate(fields, 1):
+        # col_letter = get_column_letter(col_num)
+        cell = ws.cell(row=1, column=col_num, value=field)
+        cell.font = openpyxl.styles.Font(bold=True) 
+
+    # Write the data rows
+    for row_num, data in enumerate(testdata_objects, 2):
+        for col_num, field in enumerate(fields, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=getattr(data, field))
+
+    file_path = "full_data.xlsx"
+    wb.save(file_path)
+
+    response = FileResponse(open(file_path, 'rb'), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="full_data.xlsx'
+
+    return response            
+
+def download_Do_Number_csv(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Full Data"
+    testdata_objects = DoNumber.objects.all()
+
+    # Define the fields for the CSV file
+    fields = ['ID','DO_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE']
+   
+    for col_num, field in enumerate(fields, 1):
+        # col_letter = get_column_letter(col_num)
+        cell = ws.cell(row=1, column=col_num, value=field)
+        cell.font = openpyxl.styles.Font(bold=True) 
+
+    # Write the data rows
+    for row_num, data in enumerate(testdata_objects, 2):
+        for col_num, field in enumerate(fields, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=getattr(data, field))
+
+    file_path = "full_data.xlsx"
+    wb.save(file_path)
+
+    response = FileResponse(open(file_path, 'rb'), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="full_data.xlsx'
+
+    return response            
+
+def ordertracking(request):
     if request.method == "POST":
-        form = proformaForm(request.POST)
+        form = OrdertrackingForm(request.POST)
         if form.is_valid():
-            try:
-                form.save()
-                return redirect('testcase:proforma')
-            except Exception as e:
-                return HttpResponse(f"An error occurred: {str(e)}")
-        else:
-            return HttpResponse("Form is not valid.")
-    else:
-        form = proformaForm()
+            form.save()
+            filter_Incharge = form.cleaned_data['InCharger']
+            filter_Status = form.cleaned_data['Status']
 
-    last_id = Proforma.objects.last().ID if Proforma.objects.exists() else 0
-    VESSEL_NAME = Proforma.objects.exclude(VESSEL_NAME__exact='').order_by('VESSEL_NAME').values_list('VESSEL_NAME', flat=True).distinct()
+            url = reverse('Logistics:filter')
+            url += f'?filter_Incharge={filter_Incharge}&filter_Status={filter_Status}'
+            return HttpResponseRedirect(url)
+    else:
+        form = OrdertrackingForm()
+
+
+    if request.GET.get('filter_Incharge'):
+        filter_Incharge = request.GET.get('filter_Incharge')
+        # Perform any filtering or processing based on the filter_ClientName value
+
+        if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            # Return a JSON response if it's an AJAX request
+            return JsonResponse({'message': 'Filtered data'})
+    test1 = Ordertracking.objects.all().order_by('-ID')
+
+    filter_Incharge = request.GET.get('filter_Incharge')
+    filter_Status = request.GET.get('filter_Status')
+
+    if filter_Incharge:
+        test1 = test1.filter(InCharger=filter_Incharge)
+    if filter_Status:
+        test1 = test1.filter(Status=filter_Status)
+
+
+    unique_status = Ordertracking.objects.order_by('Status').values_list('Status', flat=True).distinct()
+    unique_incharge = Ordertracking.objects.order_by('InCharger').values_list('InCharger', flat=True).distinct()
+
+
 
     context = {
-        
-        'last_id': last_id + 1,
         'form': form,
-        'VESSEL_NAME_options' : VESSEL_NAME
-    } 
-      
-    return render(request, 'WES-I-Numberseries/addp.html',context)
+        'test1': test1,
+        'filter_Status': filter_Status,
+        'filter_Incharge': filter_Incharge,
+        'unique_status': unique_status,
+        'unique_incharge': unique_incharge,
+    }
+    return render(request, 'ordertracking/ordertracking.html', context)
 
-def addnewp(request):
+def dropdown_status(request):
+    selected_Incharge = request.GET.get('InCharger')  # Fix the case here
+    print(selected_Incharge)
+    test1 = Ordertracking.objects.all()
+
+    if selected_Incharge:
+        invoices = test1.filter(InCharger=selected_Incharge)  # Fix the case here
+        Status_options = list(invoices.values_list('Status', flat=True).distinct())
+    else:
+        Status_options = []
+
+    response_data = {
+        'Status_options': Status_options,
+    }
+
+    return JsonResponse(response_data)
+
+def clean_data(value):
+    # Replace problematic characters with valid characters
+    # cleaned_value = value.replace('/', '_').replace(':', '_').replace('*', '_').replace('?', '_').replace('"', '_').replace('<', '_').replace('>', '_').replace('|', '_')
+    # def clean_data(value):
+    # Define a regular expression pattern to match non-printable characters
+
+    if not isinstance(value, str):
+        # Handle non-string values here, e.g., by returning an empty string
+        return ""
+    pattern = r'[\x00-\x1F\x7F-\x9F\xAD]'
+
+    # Use the regular expression to replace non-printable characters with an underscore
+    cleaned_value = re.sub(pattern, "_", value)
+
+    return cleaned_value    
+ 
+
+def ordertracking_csv(request):
+    filter_Incharge = request.GET.get('filter_Incharge')
+    filter_Status = request.GET.get('filter_Status')
+   
+
+    filters = {}
+    if filter_Incharge:
+        filters['InCharger'] = filter_Incharge
+    if filter_Status:
+        filters['Status'] = filter_Status
+    
+
+    test1 = Ordertracking.objects.filter(**filters)  # Apply the filters to the queryset
+
+    # Calculate total amounts
+    # total_invoice_amount = sum(float(data.Invoiceamount) for data in test1)
+    # total_outstanding_amount = sum(float(data.outstandingBalance) for data in test1 if data.outstandingBalance.strip())
+
+    # Create a new Excel workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Filtered Data"
+
+    fields = ['ID','Branch','WES_NO','PO_NO','PO_Date', 'Client_Name','Vessel_Name','Supplier_Name','Forwarder_name','AWB_NO','Status','Status_Date','InCharger','Dolibar','Remarks']
+ 
+    # Write the headers
+    for col_num, field in enumerate(fields, 1):
+        cell = ws.cell(row=1, column=col_num, value=field)
+        cell.font = openpyxl.styles.Font(bold=True)
+
+
+    # for row_num, data in enumerate(test1, 2):
+    #     for col_num, field in enumerate(fields, 1):
+    #         cleaned_value = clean_data(getattr(data, field))
+    #         cell = ws.cell(row=row_num, column=col_num, value=cleaned_value)
+    for row_num, data in enumerate(test1, 2):
+        for col_num, field in enumerate(fields, 1):
+            if field == 'ID':
+                cell = ws.cell(row=row_num, column=col_num, value=getattr(data, field))  # Use the value directly
+            else:
+                cleaned_value = clean_data(getattr(data, field))
+                cell = ws.cell(row=row_num, column=col_num, value=cleaned_value)
+
+
+    file_path = "filtered_data.xlsx"
+    wb.save(file_path)
+
+    response = FileResponse(open(file_path, 'rb'), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="filtered_data.xlsx"'
+
+    return response    
+
+def tracking_csv(request):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Full Data"
+    testdata_objects = Ordertracking.objects.all()
+
+    # Define the fields for the CSV file
+    fields = ['ID','Branch','WES_NO','PO_NO','PO_Date', 'Client_Name','Vessel_Name','Supplier_Name','Forwarder_name','AWB_NO','Status','Status_Date','InCharger','Dolibar','Remarks']
+    
+    for col_num, field in enumerate(fields, 1):
+        # col_letter = get_column_letter(col_num)
+        cell = ws.cell(row=1, column=col_num, value=field)
+        cell.font = openpyxl.styles.Font(bold=True) 
+
+    # Write the data rows
+    for row_num, data in enumerate(testdata_objects, 2):
+        for col_num, field in enumerate(fields, 1):
+            cell = ws.cell(row=row_num, column=col_num, value=getattr(data, field))
+
+    file_path = "full_data.xlsx"
+    wb.save(file_path)
+
+    response = FileResponse(open(file_path, 'rb'), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response['Content-Disposition'] = 'attachment; filename="full_data.xlsx'
+
+    return response         
+
+def addtracking(request):
     if request.method == "POST":
-        form = proformaForm(request.POST)
+        form = OrdertrackingForm(request.POST)
         if form.is_valid():
             try:
                 form.save()
-                return redirect('testcase:proforma')
+                return redirect('Logistics:ordertracking')
             except Exception as e:
                 return HttpResponse(f"An error occurred: {str(e)}")
         else:
             return HttpResponse("Form is not valid.")
     else:
-        form = proformaForm()
+        form = OrdertrackingForm()
 
-    last_id = Proforma.objects.last().ID if Proforma.objects.exists() else 0
+    Branch = Ordertracking.objects.exclude(Status__exact='').order_by('Branch').values_list('Branch', flat=True).distinct()
+    Status = Ordertracking.objects.exclude(Status__exact='').order_by('Status').values_list('Status', flat=True).distinct()
+    InCharger = Ordertracking.objects.exclude(InCharger__exact='').order_by('InCharger').values_list('InCharger', flat=True).distinct()
+    Client_Name = Ordertracking.objects.exclude(Status__exact='').order_by('Client_Name').values_list('Client_Name', flat=True).distinct()
+    Vessel_Name = Ordertracking.objects.exclude(Status__exact='').order_by('Vessel_Name').values_list('Vessel_Name', flat=True).distinct()
+    Supplier_Name = Ordertracking.objects.exclude(InCharger__exact='').order_by('Supplier_Name').values_list('Supplier_Name', flat=True).distinct()
+    Forwarder_name = Ordertracking.objects.exclude(Status__exact='').order_by('Forwarder_name').values_list('Forwarder_name', flat=True).distinct()
+    Dolibar = Ordertracking.objects.exclude(InCharger__exact='').order_by('Dolibar').values_list('Dolibar', flat=True).distinct()
+
+    last_id = Ordertracking.objects.last().ID if Ordertracking.objects.exists() else 0
+    context = {'last_id': last_id + 1} 
+      
 
     context = {
-        
-        'last_id': last_id + 1,
-        'form': form
-    
-    } 
-      
-    return render(request, 'WES-I-Numberseries/addnewp.html',context)
-   
-def proformap(request):
-      
-    
-    test1 = Proforma.objects.all().order_by('-ID')
-   
+        'form': form,
+        'Status_options': Status,
+        'InCharger_options' : InCharger,
+        'Branch_options': Branch,
+        'Client_Name_options' : Client_Name,
+        'Vessel_Name_options': Vessel_Name,
+        'Supplier_Name_options' : Supplier_Name,
+        'Forwarder_name_options': Forwarder_name,
+        'Dolibar_options' : Dolibar,
+        'last_id': last_id + 1
 
+    }
+    return render(request, 'ordertracking/addtracking.html', context)      
+
+def addnewtracking(request):
+    if request.method == "POST":
+        form = OrdertrackingForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                return redirect('Logistics:ordertracking')
+            except Exception as e:
+                return HttpResponse(f"An error occurred: {str(e)}")
+        else:
+            return HttpResponse("Form is not valid.")
+    else:
+        form = OrdertrackingForm()
+ 
+    last_id = Ordertracking.objects.last().ID if Ordertracking.objects.exists() else 0
+    context = {'last_id': last_id + 1} 
+      
+
+    context = {
+        'form': form,
+        'last_id': last_id + 1
+
+    }
+    return render(request, 'ordertracking/addnewtracking.html', context)
+
+def filterbtn(request):
+    filter_Status = request.GET.get('filter_Status')
+    filter_Incharge = request.GET.get('filter_Incharge')
+
+    test1 = Ordertracking.objects.all().order_by('-ID')
+
+
+    if filter_Status:
+        test1 = test1.filter(Status=filter_Status)
+    if filter_Incharge:
+        test1 = test1.filter(InCharger=filter_Incharge)
+   
     filtered_data = list(test1.values())    
     total_rows = len(filtered_data)
     context = {
         'test1': test1,
-       
+        'filter_Status': filter_Status,
+        'filter_Incharge': filter_Incharge,
         'total_rows':int(total_rows),
     }
     # return JsonResponse({'total_rows': total_rows})
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         return JsonResponse(filtered_data, safe=False)
     
-    return render(request,'WES-I-Numberseries/proformap.html', context)       
+    return render(request,'ordertracking/filterbtn.html', context)
 
-
-def updatep(request, data_id):
-    data = get_object_or_404(Proforma, pk=data_id)  # Use CommercialInvoice model
+def updatetracking(request, data_id):
+    data = get_object_or_404(Ordertracking, pk=data_id)
     if request.method == 'POST':
-        form = proformaForm(request.POST, instance=data)
+        form = OrdertrackingForm(request.POST, instance=data)
 
         if form.is_valid():
             form.save()
-            return redirect('testcase:proformap')
+            return redirect('Logistics:ordertracking')
+        else:
+            print('invalid')    
     else:
-        form = proformaForm(instance=data) 
-    
+        form = OrdertrackingForm(instance=data)
+        
+    Branch = Ordertracking.objects.exclude(Branch__exact='').order_by('Branch').values_list('Branch', flat=True).distinct()
+    Status = Ordertracking.objects.exclude(Status__exact='').order_by('Status').values_list('Status', flat=True).distinct()
+    InCharger = Ordertracking.objects.exclude(InCharger__exact='').order_by('InCharger').values_list('InCharger', flat=True).distinct()
+    Client_Name = Ordertracking.objects.exclude(Client_Name__exact='').order_by('Client_Name').values_list('Client_Name', flat=True).distinct()
+    Vessel_Name = Ordertracking.objects.exclude(Vessel_Name__exact='').order_by('Vessel_Name').values_list('Vessel_Name', flat=True).distinct()
+    Supplier_Name = Ordertracking.objects.exclude(Supplier_Name__exact='').order_by('Supplier_Name').values_list('Supplier_Name', flat=True).distinct()
+    Forwarder_name = Ordertracking.objects.exclude(Forwarder_name__exact='').order_by('Forwarder_name').values_list('Forwarder_name', flat=True).distinct()
+    Dolibar = Ordertracking.objects.exclude(Dolibar__exact='').order_by('Dolibar').values_list('Dolibar', flat=True).distinct()
+
+    last_id = Ordertracking.objects.last().ID if Ordertracking.objects.exists() else 0
+   
+      
+
     context = {
         'form': form,
         'data_id': data_id,
+        'Status_options': Status,
+        'InCharger_options' : InCharger,
+        'Branch_options': Branch,
+        'Client_Name_options' : Client_Name,
+        'Vessel_Name_options': Vessel_Name,
+        'Supplier_Name_options' : Supplier_Name,
+        'Forwarder_name_options': Forwarder_name,
+        'Dolibar_options' : Dolibar,
+        'last_id': last_id + 1
+
     }
-    return render(request, 'WES-I-Numberseries/updatep.html', context)     
+    return render(request, 'ordertracking/updatetracking.html', context)  
 
-def download_ci_csv(request):
-    # Get all Testdata objects without applying any filters
-    testdata_objects = CommercialInvoice.objects.all()
+def order(request):
 
-    # Create the response and set the appropriate headers for CSV download
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="CommercialInvoice.csv"'
+    test1 = Ordertracking.objects.all()
 
-    # Define the fields for the CSV file
-    fields = ['ID','COMMERCIAL_NUMBER','PACKING_LIST_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE', 'Remarks']
+    print(test1)
+    test1 = test1.filter(Status='Order Confirmation').order_by('-ID')
+
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    writer = csv.writer(response)
-    writer.writerow(fields)
+    return render(request,'ordertracking/order.html', context)      
 
-    # Write the data rows
-    for data in testdata_objects:
-        row = [getattr(data, field) for field in fields]
-        writer.writerow(row)
+def information(request):
 
-    return response      
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Waiting For information').order_by('-ID')
 
-def download_dodnnumber_csv(request):
-    # Get all Testdata objects without applying any filters
-    testdata_objects = DoDnNumber.objects.all()
-
-    # Create the response and set the appropriate headers for CSV download
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="DoDnNumber.csv"'
-
-    # Define the fields for the CSV file
-    fields = ['ID','DO_DN_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE', 'REMARK']
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    writer = csv.writer(response)
-    writer.writerow(fields)
+    return render(request,'ordertracking/information.html', context)     
 
-    # Write the data rows
-    for data in testdata_objects:
-        row = [getattr(data, field) for field in fields]
-        writer.writerow(row)
+def consignee(request):
 
-    return response       
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Waiting for consignee').order_by('-ID')
 
-def download_wesnewsg_csv(request):
-    # Get all Testdata objects without applying any filters
-    testdata_objects = WesNewSg.objects.all()
-
-    # Create the response and set the appropriate headers for CSV download
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="WesNewSg.csv"'
-
-    # Define the fields for the CSV file
-    fields = ['ID','INVOICE_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE', 'INVOICE_TYPE', 'SIGNED_DN', 'REMARK']
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    writer = csv.writer(response)
-    writer.writerow(fields)
+    return render(request,'ordertracking/consignee.html', context)      
 
-    # Write the data rows
-    for data in testdata_objects:
-        row = [getattr(data, field) for field in fields]
-        writer.writerow(row)
+def freightcost(request):
 
-    return response        
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Freight cost quoted').order_by('-ID')
 
-def download_commercial_Pacl_csv(request):
-    # Get all Testdata objects without applying any filters
-    testdata_objects = CommercialPacl.objects.all()
-
-    # Create the response and set the appropriate headers for CSV download
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="CommercialPacl.csv"'
-
-    # Define the fields for the CSV file
-    fields = ['ID','COMMERCIAL_NUMBER', 'PACL_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE']
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    writer = csv.writer(response)
-    writer.writerow(fields)
+    return render(request,'ordertracking/freightcost.html', context)      
 
-    # Write the data rows
-    for data in testdata_objects:
-        row = [getattr(data, field) for field in fields]
-        writer.writerow(row)
+def arrangeddispatch(request):
 
-    return response        
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Arranged dispatch').order_by('-ID')
 
-def download_Invoice_Number_csv(request):
-    # Get all Testdata objects without applying any filters
-    testdata_objects = InvoiceNumber.objects.all()
-
-    # Create the response and set the appropriate headers for CSV download
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="InvoiceNumber.csv"'
-
-    # Define the fields for the CSV file
-    fields = ['ID','INVOICE_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE', 'REMARK']
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    writer = csv.writer(response)
-    writer.writerow(fields)
+    return render(request,'ordertracking/arrangeddispatch.html', context)    
 
-    # Write the data rows
-    for data in testdata_objects:
-        row = [getattr(data, field) for field in fields]
-        writer.writerow(row)
+def dispatched(request):
 
-    return response     
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Dispatched').order_by('-ID')
 
-def download_Do_Number_csv(request):
-    # Get all Testdata objects without applying any filters
-    testdata_objects = DoNumber.objects.all()
-
-    # Create the response and set the appropriate headers for CSV download
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="DoNumber.csv"'
-
-    # Define the fields for the CSV file
-    fields = ['ID','DO_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE']
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    writer = csv.writer(response)
-    writer.writerow(fields)
+    return render(request,'ordertracking/dispatched.html', context)         
 
-    # Write the data rows
-    for data in testdata_objects:
-        row = [getattr(data, field) for field in fields]
-        writer.writerow(row)
+def delivered(request):
 
-    return response     
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Delivered').order_by('-ID')
 
-def download_Proforma_csv(request):
-    # Get all Testdata objects without applying any filters
-    testdata_objects = Proforma.objects.all()
-
-    # Create the response and set the appropriate headers for CSV download
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="Proforma.csv"'
-
-    # Define the fields for the CSV file
-    fields = ['ID','PROFORMA_INVOICE_NUMBER', 'DATE', 'VESSEL_NAME', 'WES_NUMBER', 'PO_NUMBER', 'INCHARGE', 'STATUS', 'REMARK']
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
     
-    writer = csv.writer(response)
-    writer.writerow(fields)
+    return render(request,'ordertracking/delivered.html', context)     
 
-    # Write the data rows
-    for data in testdata_objects:
-        row = [getattr(data, field) for field in fields]
-        writer.writerow(row)
 
-    return response
 
+def pending(request):
+
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Pending and Long Lead Time').order_by('-ID')
+
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
+    
+    return render(request,'ordertracking/pending.html', context)         
+
+
+def invoiced(request):
+
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Invoiced').order_by('-ID')
+
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
+    
+    return render(request,'ordertracking/invoiced.html', context)         
+
+def holdpo(request):
+
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Hold PO').order_by('-ID')
+
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
+    
+    return render(request,'ordertracking/holdpo.html', context)   
+
+def ongoing(request):
+
+    test1 = Ordertracking.objects.all()
+    print(test1)
+    test1 = test1.filter(Status='Clarification ongoing').order_by('-ID')
+
+    filtered_data = list(test1.values())    
+    total_rows = len(filtered_data)
+    context = {
+        'test1': test1,
+        'total_rows':int(total_rows) ,
+    }
+    # return JsonResponse({'total_rows': total_rows})
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+        return JsonResponse(filtered_data, safe=False)
+    
+    return render(request,'ordertracking/ongoing.html', context)         
 
